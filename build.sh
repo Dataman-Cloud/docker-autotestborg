@@ -1,3 +1,4 @@
+name=centos7-autotestborg
 tag=`date +%Y%m%d%H%M`
 opts="--no-cache"
 docker build -f Dockerfile_pybot -t pybot:$tag .
@@ -12,6 +13,6 @@ WORKDIR /BORSP_api
 CMD ["pybot", "--include", "ha", "valid_cluster_manage.txt"]
 EOF
 
-docker build $opts -t autotest:$tag .
+docker build $opts -t $name:$tag .
 
-echo "autotest:$tag" > image_name.txt
+echo "$name:$tag" > image_name.txt
