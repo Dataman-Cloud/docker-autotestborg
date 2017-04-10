@@ -1,0 +1,58 @@
+*** Settings ***
+Suite Setup     Create Test Data
+Suite Teardown  Delete All Sessions
+Library         Collections
+Library         String
+Library         OperatingSystem
+Library         RequestsLibrary
+Library         Collections
+Library         XML
+Library         json
+Resource        config.txt
+Resource        registry_keyword.txt
+
+*** Test Cases ***
+镜像仓库-推镜像
+    [Tags]  镜像仓库
+    Push Image to registry
+
+镜像仓库-创建命名空间 POST /v1/registry/groups/:group_id/namespace
+  [Tags]  镜像仓库
+  ${namespace}=  Get Randomstring
+  ${data}=  Set Variable  {"namespace":"${namespace}"}
+  ${resp}=  Create Namespace  ${groupid1}  ${data}  ${adminheaders}
+  Should Be Equal As Strings  ${resp.status_code}  200
+
+镜像仓库-获取命名空间 GET /v1/registry/groups/:group_id/namespace
+  [Tags]  镜像仓库
+  ${resp}=  Get Namespace  ${groupid1}  ${adminheaders}
+  Should Be Equal As Strings  ${resp.status_code}  200
+  ${namespace}=  Evaluate  '${resp.json()['data'][0]['Namespace']}'
+  Set Global Variable  ${namespace}
+
+镜像仓库-获取镜像数 GET /v1/registry/namespace/:namespace/imageCount
+  [Tags]  镜像仓库
+  ${resp}=  Get ImageCount  ${namespace}  ${adminheaders}
+  Should Be Equal As Strings  ${resp.status_code}  200
+
+镜像仓库-删除命名空间 DELETE /v1/registry/groups/:group_id/namespace/:namespace
+  [Tags]  镜像仓库
+  ${resp}=  Delete Namespace  ${groupid1}  ${namespace}  ${adminheaders}
+  Should Be Equal As Strings  ${resp.status_code}  200
+
+镜像仓库-镜像列表 GET /v1/registry/repositories/mine GET /v1/registry/repositories/mine
+  [Tags]  镜像仓库
+  ${resp}=  Get ImageList  ${adminheaders}
+  Should Be Equal As Strings  ${resp.status_code}  200
+  ${image}=  Evaluate  '${resp.json()['data'][0]['Image']}'
+  Set Global Variable  ${image}
+
+镜像仓库-获取镜像版本列表 GET /v1/registry/groups/:group_id/namespace/:namespace/:image/tags
+  [Tags]  镜像仓库
+  ${resp}=  Get TagList  ${groupid1}  ${namespace}  ${image}  ${adminheaders}
+  Should Be Equal As Strings  ${resp.status_code}  200
+
+镜像仓库-删除镜像 DELETE /v1/registry/manifests/:namespace/:image
+  [Tags]  镜像仓库
+  ${resp}=  Delete Image  ${namespace}  ${image}  ${adminheaders}
+  Should Be Equal As Strings  ${resp.status_code}  200

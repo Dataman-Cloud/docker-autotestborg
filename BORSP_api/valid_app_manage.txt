@@ -1,0 +1,114 @@
+*** Settings ***
+Suite Setup     Get Token
+Suite Teardown  Delete All Sessions
+Library         Collections
+Library         String
+Library         OperatingSystem
+Library         RequestsLibrary
+Library         Collections
+Library         XML
+Library         json
+Library         SSHLibrary
+Resource        config.txt
+
+*** Test Cases ***
+应用管理-获取应用列表
+    [Tags]  应用管理  ha
+    Create Session  shurenyun  ${SERVER}
+    ${resp}=  Get Request  shurenyun  /v1/apps  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+应用管理-新建应用
+    [Tags]  应用管理  ha
+    ${name}=  Get Randomstring
+    ${appname}=  Evaluate  'cluster1-apitest' + '${name}'
+    Set Global Variable  ${appname}
+    ${appjson}=  Get Binary File  ${CURDIR}${/}json/valid_app.json
+    ${data} =  Replace Variables  ${appjson}
+    ${resp}=  Post Request  shurenyun  /v1/apps  data=${data}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  201
+
+应用管理-获取指定应用的信息
+    [Tags]  应用管理  ha
+    ${path}=  Evaluate  '/v1/apps/'+'${appname}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+应用管理-获取应用容器列表
+    [Tags]  应用管理  ha
+    Sleep  20
+    ${path}=  Evaluate  '/v1/apps/'+'${appname}'+'/containers'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+应用管理-更新指定应用
+    [Tags]  应用管理  ha
+    ${appjson}=  Get Binary File  ${CURDIR}${/}json/valid_app_update.json
+    ${data} =  Replace Variables  ${appjson}
+    ${path}=  Evaluate  '/v1/apps/'+'${appname}'
+    ${resp}=  Put Request  shurenyun  ${path}  data=${data}  headers=${headers}
+    log  ${resp.json()}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+应用管理-更新指定应用-更新逻辑集群
+    [Tags]  应用管理  ha
+    ${appjson}=  Get Binary File  ${CURDIR}${/}json/invalid_app_update.json
+    ${data} =  Replace Variables  ${appjson}
+    ${path}=  Evaluate  '/v1/apps/'+'${appname}'
+    ${resp}=  Put Request  shurenyun  ${path}  data=${data}  headers=${headers}
+    log  ${resp.json()}
+    Should Be Equal As Strings  ${resp.status_code}  400
+
+应用管理-获取指定应用所有实例
+    [Tags]  应用管理  ha
+    ${path}=  Evaluate  '/v1/apps/'+'${appname}'+'/tasks'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    Log  ${resp.text}
+    ${taskid}=  Evaluate  '${resp.json()['data']['tasks'][0]['id']}'
+    Set Global Variable  ${taskid}
+
+应用管理-获取指定应用所有版本
+    [Tags]  应用管理  ha
+    ${path}=  Evaluate  '/v1/apps/'+'${appname}'+'/versions'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    Log  ${resp.text}
+    ${versionid}=  Evaluate  '${resp.json()['data']['versions'][0]}'
+    Set Global Variable  ${versionid}
+
+应用管理-根据应用版本id获取版本信息
+    [Tags]  应用管理  ha
+    ${path}=  Evaluate  '/v1/apps/'+'${appname}'+'/versions/'+'${versionid}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    Log  ${resp.text}
+
+应用管理-杀掉列出的任务实例并根据请求扩缩应用
+    [Tags]  应用管理  ha
+    ${data}=  Set Variable  {"ids":["${taskid}"]}
+    ${resp}=  Post Request  shurenyun  /v1/tasks/delete?scale=true  data=${data}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    Log  ${resp.text}
+
+应用管理-获取所有等待执行的任务实例
+    [Tags]  应用管理  ha
+    ${resp}=  Get Request  shurenyun  /v1/queue  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    Log  ${resp.text}
+
+应用管理-重启指定应用
+    [Tags]  应用管理  ha
+    ${path}=  Evaluate  '/v1/apps/'+'${appname}'+'/restart'
+    ${resp}=  Post Request  shurenyun  ${path}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+应用管理-删除指定应用
+    [Tags]  应用管理  ha
+    ${path}=  Evaluate  '/v1/apps/'+'${appname}'
+    ${resp}=  Delete Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200

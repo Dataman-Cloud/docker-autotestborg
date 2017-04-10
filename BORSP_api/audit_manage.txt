@@ -1,0 +1,38 @@
+*** Settings ***
+Suite Setup     Create Test Data
+Suite Teardown  Delete Test Data
+Library         Collections
+Library         String
+Library         OperatingSystem
+Library         RequestsLibrary
+Library         Collections
+Library         XML
+Library         json
+Library         SSHLibrary
+Resource        config.txt
+
+*** Test Cases ***
+审计管理-审计搜索
+    [Tags]  审计搜索
+    ${resp}=  Get Request  shurenyun  /v1/audit  headers=${adminheaders}
+    log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+审计管理-审计搜索-没有权限
+    [Tags]  审计搜索
+    ${resp}=  Get Request  shurenyun  /v1/audit  headers=${testheaders1}
+    log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+审计管理-对象类型搜索
+    [Tags]  对象类型搜索
+    ${resp}=  Get Request  shurenyun  /v1/audit/targettypes  headers=${adminheaders}
+    log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+审计管理-操作类型搜索
+    [Tags]  操作类型搜索
+    ${resp}=  Get Request  shurenyun  /v1/audit/operations  headers=${adminheaders}
+    log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+

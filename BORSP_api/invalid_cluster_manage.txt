@@ -1,0 +1,72 @@
+*** Settings ***
+Suite Setup     Create Test Data
+Suite Teardown  Delete Test Data
+Library         Collections
+Library         String
+Library         OperatingSystem
+Library         RequestsLibrary
+Library         Collections
+Library         XML
+Library         json
+Library         SSHLibrary
+Resource        config.txt
+
+*** Test Cases ***
+集群管理-创建集群-权限不足
+    [Tags]  创建集群
+    ${clustername}=  Get Randomstring
+    ${data}=  Set Variable  {"groupId":${groupid1},"clusterLabel":"${clustername}","desc": "xsaxas"}
+    ${resp}=  Create Cluster  ${data}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Create Cluster  ${data}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+集群管理-创建集群-集群不存在
+    [Tags]  创建集群
+    ${clustername}=  Get Randomstring
+    ${data}=  Set Variable  {"groupId":99999,"clusterLabel":"${clustername}","desc": "xsaxas"}
+    ${resp}=  Create Cluster  ${data}  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  400
+
+集群管理-获取集群列表-权限不足
+    [Tags]  获取集群列表
+    ${resp}=  Get Cluster List  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    ${resp}=  Get Cluster List  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+集群管理-获取单个集群-集群不存在
+    [Tags]  获取单个集群
+    ${resp}=  Get Cluster By Id  999  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+集群管理-获得按vcluster分组的node列表-权限不足
+    [Tags]  获得按vcluster分组的node列表
+    ${resp}=  Get Nodes  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    ${resp}=  Get Nodes  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+集群管理-获得用户组的vcluster列表-权限不足
+    [Tags]  获得用户组的vcluster列表
+    ${resp}=  Get Cluster By Id  ${groupid1}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  404
+    ${resp}=  Get Cluster By Id  ${groupid1}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+集群管理-获得用户组的vcluster列表-组不存在
+    [Tags]  获得用户组的vcluster列表
+    ${resp}=  Get Cluster By Id  9999  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+集群管理-删除集群-权限不足
+    [Tags]  删除集群
+    ${resp}=  Delete Cluster  ${clusterid1}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Delete Cluster  ${clusterid1}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+集群管理-删除集群-集群不存在
+    [Tags]  删除集群
+    ${resp}=  Delete Cluster  9999  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  404

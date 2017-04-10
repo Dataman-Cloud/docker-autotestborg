@@ -1,0 +1,100 @@
+*** Settings ***
+Suite Setup     Create App
+Suite Teardown  Delete App
+Library         Collections
+Library         String
+Library         OperatingSystem
+Library         RequestsLibrary
+Library         Collections
+Library         XML
+Library         json
+Library         SSHLibrary
+Library         DateTime
+Resource        config.txt
+
+*** Keywords ***
+Get now time
+    ${time} =  Get Current Date
+    ${time2} =  Convert Date  ${time}  epoch
+    ${tt} =  Convert To String  ${time2}
+    ${tt} =  Fetch From Left  ${tt}  .
+    [Return]  ${tt}
+
+Create App
+    Get Token
+    Create Session  shurenyun  ${SERVER}
+
+    ${name}=  Get Randomstring
+    ${appname}=  Evaluate  'test' + '${name}'
+    Set Global Variable  ${appname}
+    ${appjson}=  Get Binary File  ${CURDIR}${/}json/create_app_v2_nohealthcheck.json
+    ${data} =  Replace Variables  ${appjson}
+    Log  ${data}
+    ${resp}=  Post Request  shurenyun  /v2/apps  data=${data}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  201
+    Sleep  10
+    #获取应用状态
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-datamanmesos'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    ${state}=  Evaluate  '${resp.json()['data']['state']}'
+    Run Keyword If  '${state}' != 'normal'  Fail
+
+    ${time1}=   Get now time
+    Set Global Variable  ${time1}
+
+Delete App
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-datamanmesos'
+    ${resp}=  Delete Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    Delete All Sessions
+
+*** Test Cases ***
+MO-01 监控-快捷查询-必填项不填-集群名称
+    [Tags]  11
+    Sleep  20
+    ${time2}=   Get now time
+    Set Global Variable  ${time2}
+    ${path}=  Evaluate  'v1/mola/metrics?app='+'${appname}'+'&metric=memory&step=5&start='+'${time1}'+'&end='+'${time2}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  400
+
+MO-02 监控-快捷查询-必填项不填-应用名称
+    ${path}=  Evaluate  'v1/mola/metrics?cluster=datamanmesos&metric=memory&step=5&start='+'${time1}'+'&end='+'${time2}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  400
+
+MO-03 监控-快捷查询-必填项不填-监控指标
+    ${path}=  Evaluate  'v1/mola/metrics?app='+'${appname}'+'&step=5&start='+'${time1}'+'&end='+'${time2}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  400
+
+MO-05 监控-快捷查询-不存在的应用
+    ${path}=  Evaluate  'v1/mola/metrics?app=xxxxxx&cluster=datamanmesos&metric=memory&step=5&start='+'${time1}'+'&end='+'${time2}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  400
+
+MO-06 监控-快捷查询-不存在的实例
+    ${path}=  Evaluate  'v1/mola/metrics?app='+'${appname}'+'&cluster=datamanmesos&metric=memory&step=5&start='+'${time1}'+'&end='+'${time2}'+'&task=10'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  400
+
+MO-14 监控-高级查询-不存在的应用
+    ${path}=  Evaluate  'v1/mola/metrics?app=xxxxxx'+'&expr=container_cpu_system_seconds_total&step=5&start='+'${time1}'+'&end='+'${time2}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  400
+
+MO-23 监控-时间-起止-开始时间大于结束时间
+    ${path}=  Evaluate  'v1/mola/metrics?app='+'${appname}'+'&metric=memory&step=5&start='+'${time2}'+'&end='+'${time1}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  400

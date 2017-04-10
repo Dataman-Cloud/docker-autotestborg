@@ -1,0 +1,212 @@
+*** Settings ***
+Library         Collections
+Library         String
+Library         OperatingSystem
+Library         RequestsLibrary
+Library         Collections
+Library         XML
+Library         json
+Library         SSHLibrary
+Resource        all_api.txt
+
+*** Keywords ***
+Get My Apps
+    [Arguments]    ${headers}
+    Get User ID
+    ${resp}=       Get Request    shurenyun    /v1/apps/?label=USER_ID==${user_id}    headers=${headers}
+    log            ${resp.text}
+    [Return]       ${resp}
+
+Get All Apps
+    [Arguments]    ${headers}
+    Get User ID
+    ${resp}=       Get Request    shurenyun    /v1/apps    headers=${headers}
+    log            ${resp.text}
+    [Return]       ${resp}
+
+About Me
+    [Arguments]    ${headers}
+    ${resp}=       Get Request    shurenyun    /v1/aboutme    headers=${headers}
+    log            ${resp.text}
+    [Return]       ${resp}
+
+Delete App
+    [Arguments]    ${headers}    ${id}
+    ${resp}=       Delete Request    shurenyun    /v1/apps${id}    headers=${headers}
+    log            ${resp.text}
+    [Return]       ${resp}
+
+Get All Clusters
+    [Arguments]    ${headers}
+    ${resp}=       Get Request    shurenyun    /v1/clusters    headers=${headers}
+    log            ${resp.text}
+    [Return]       ${resp}
+
+Delete Cluster
+    [Arguments]    ${headers}    ${id}
+    ${resp}=       Delete Request    shurenyun    /v1/clusters/${id}    headers=${headers}
+    log            ${resp.text}
+    [Return]       ${resp}
+
+Get Cluster
+    [Arguments]    ${headers}    ${id}
+    ${resp}=       Get Request    shurenyun    /v1/clusters/${id}    headers=${headers}
+    log            ${resp.text}
+    [Return]       ${resp}
+
+Add Or Delete Nodes
+    [Arguments]    ${headers}     ${data}
+    ${resp}=       Patch Request    shurenyun    /v1/nodes      data=${data}      headers=${headers}
+    log            ${resp.text}
+    [Return]       ${resp}
+
+Get All Users
+    [Arguments]    ${headers}
+    ${resp}=       Get Request    shurenyun    /v1/accounts    headers=${headers}
+    log            ${resp.text}
+    [Return]       ${resp}
+
+Delete User
+    [Arguments]    ${headers}   ${id}
+    ${resp}=       Delete Request    shurenyun    /v1/accounts/${id}    headers=${headers}
+    log            ${resp.text}
+    [Return]       ${resp}
+
+Get All Groups
+    [Arguments]    ${headers}
+    ${resp}=       Get Request    shurenyun    /v1/groups    headers=${headers}
+    log            ${resp.text}
+    [Return]       ${resp}
+
+Get Users of Group
+    [Arguments]    ${headers}    ${group_id}
+    ${resp}=       Get Request    shurenyun    /v1/groups/${group_id}/accounts    headers=${headers}
+    log            ${resp.text}
+    [Return]       ${resp}
+
+Delete Group
+    [Arguments]    ${headers}   ${id}
+    ${resp}=       Delete Request    shurenyun    /v1/groups/${id}    headers=${headers}
+    log            ${resp.text}
+    [Return]       ${resp}
+#===========================================以上为底层脚本=====================================================
+Clear Test Users
+    [Documentation]   删除名字带testuser的user 以及属于testgroups组的user
+    ${resp}=       Get All Users                ${adminheaders}
+    Should Be Equal As Strings                  ${resp.status_code}      200
+    ${length}   Get Length  ${resp.json()['data']}
+    : FOR    ${idx}    IN RANGE    ${length}
+    \  ${replace1}=   Replace String  ${resp.json()['data'][${idx}]['userName']}  apitest  ${EMPTY}
+    \  Run Keyword Unless   "${resp.json()['data'][${idx}]['userName']}"=="${replace1}"   Clear User  ${resp.json()['data'][${idx}]['id']}
+
+Clear User
+    [Arguments]    ${id}
+    ${resp}=       Delete User                  ${adminheaders}    ${id}
+    Should Be Equal As Strings                  ${resp.status_code}      200
+#------------------------------------------------------------------
+
+Clear Test Groups
+    [Documentation]   删除名字带testgroup的group
+    ${resp}=       Get All Groups                ${adminheaders}
+    Should Be Equal As Strings                   ${resp.status_code}      200
+    ${length}   Get Length  ${resp.json()['data']}
+    : FOR    ${idx}    IN RANGE    ${length}
+    \  ${replace}=   Replace String  ${resp.json()['data'][${idx}]['name']}  apitest  ${EMPTY}
+    \  Run Keyword Unless   "${resp.json()['data'][${idx}]['name']}"=="${replace}"   Clear User and Group  ${resp.json()['data'][${idx}]['id']}
+
+Clear User and Group
+    [Arguments]       ${group_id}
+    #删除cluster上的node
+    Clear Users Of Group  ${group_id}
+    #删除cluster
+    Clear Group  ${group_id}
+
+Clear Users Of Group
+    [Arguments]       ${group_id}
+    ${resp}=       Get Users of Group      ${adminheaders}    ${group_id}
+    Should Be Equal As Strings                  ${resp.status_code}      200
+    ${length}   Get Length  ${resp.json()['data']}
+    : FOR    ${idx}    IN RANGE    ${length}
+    \  Clear User  ${resp.json()['data'][${idx}]['id']}
+
+Clear Group
+    [Arguments]       ${group_id}
+    ${resp}=       Delete Group                  ${adminheaders}            ${group_id}
+    Should Be Equal As Strings                   ${resp.status_code}      200
+#------------------------------------------------------------------
+
+Clear Test Clusters
+    [Documentation]   删除cluster名字带testcluster- 的
+    ${resp}=       Get All Clusters                ${adminheaders}
+    Should Be Equal As Strings                     ${resp.status_code}      200
+    ${length}   Get Length  ${resp.json()['data']}
+    : FOR    ${idx}    IN RANGE    ${length}
+    \  ${replace}=   Replace String  ${resp.json()['data'][${idx}]['clusterLabel']}  apitest  ${EMPTY}
+    \  Run Keyword Unless   "${resp.json()['data'][${idx}]['clusterLabel']}"=="${replace}"   Clear Nodes and Cluster  ${resp.json()['data'][${idx}]['id']}
+
+Clear Nodes and Cluster
+    [Arguments]       ${cluster_id}
+    #删除cluster上的node
+    Get Nodes Of Cluster Then Clear Nodes  ${cluster_id}
+    #删除cluster
+    Clear Cluster  ${cluster_id}
+
+Get Nodes Of Cluster Then Clear Nodes
+    [Arguments]       ${cluster_id}
+    ${resp}=   Get Cluster      ${adminheaders}    ${cluster_id}
+    Should Be Equal As Strings                     ${resp.status_code}      200
+    ${length}   Get Length  ${resp.json()['data']['nodes']}
+    : FOR    ${idx}    IN RANGE    ${length}
+    \  Clear Nodes    ${cluster_id}       ${resp.json()['data']['nodes'][${idx}]['hostname']}
+
+Clear Nodes
+    [Arguments]       ${cluster_id}                ${node_ips}
+    ${data}=          Set Variable                 {"method":"del","nodeIPs":["${node_ips}"],"vclusterID":${cluster_id}}
+    ${resp}=          Add Or Delete Nodes          ${adminheaders}          ${data}
+    Should Be Equal As Strings                     ${resp.status_code}      200
+
+Clear Cluster
+    [Arguments]       ${cluster_id}
+    ${resp}=       Delete Cluster                ${adminheaders}            ${cluster_id}
+    Should Be Equal As Strings                   ${resp.status_code}      200
+
+#------------------------------------------------------------------
+
+Get User ID
+    ${resp}=       About Me                ${adminheaders}
+    Should Be Equal As Strings                 ${resp.status_code}      200
+    ${user_id}=  Evaluate   "${resp.json()['data']['id']}"
+    Set Global Variable           ${user_id}
+
+Clear Test Apps
+    [Documentation]   删除应用名字带testcluster- 和 clustermmj-application的
+    ${resp}=       Get All Apps                ${adminheaders}
+    Should Be Equal As Strings                     ${resp.status_code}      200
+    ${length}   Get Length  ${resp.json()['data']['apps']}
+    : FOR    ${idx}    IN RANGE    ${length}
+    \  ${replace1}=   Replace String  ${resp.json()['data']['apps'][${idx}]['id']}  cluster1-apitest  ${EMPTY}
+    \  Run Keyword Unless   "${resp.json()['data']['apps'][${idx}]['id']}"=="${replace1}"     Clear App  ${resp.json()['data']['apps'][${idx}]['id']}
+
+Clear App
+    [Arguments]       ${app_id}
+    ${resp}=       Delete App                ${adminheaders}    ${app_id}
+    Should Be Equal As Strings                 ${resp.status_code}      200
+
+#------------------------------------------------------------------
+
+Login Sry With Admin
+    [Tags]    用户管理
+    ${data}=                      Set Variable              {"userName":"${adminname}","password":"${adminpasswd}"}
+    ${resp}=                      Login Sry                 ${data}
+    Should Be Equal As Strings    ${resp.status_code}       200
+    ${token}=  Evaluate           '${resp.json()['data']}'
+    ${adminheaders}=              Create Dictionary         Authorization=${token}
+    Set Global Variable           ${adminheaders}
+
+*** Test Cases ***
+Delete Test Data
+    Login Sry With Admin
+    Run Keyword And Ignore Error       Clear Test Apps
+    Run Keyword And Ignore Error       Clear Test Clusters
+    Run Keyword And Ignore Error       Clear Test Users
+    Run Keyword And Ignore Error       Clear Test Groups

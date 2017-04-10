@@ -1,0 +1,121 @@
+*** Settings ***
+Suite Setup     Create Test Data
+Suite Teardown  Delete Test Data
+Library         Collections
+Library         String
+Library         OperatingSystem
+Library         RequestsLibrary
+Library         Collections
+Library         XML
+Library         json
+Library         SSHLibrary
+Resource        config.txt
+
+*** Test Cases ***
+主机管理-获取所有主机列表-没有权限
+    [Tags]  获取所有主机列表
+    ${resp}=  Get All Nodes  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Get All Nodes  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+主机管理-获取资源统计信息-没有权限
+    [Tags]  获取资源统计信息
+    ${resp}=  Get All Metrics  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+主机管理-获取指定主机的信息-没有权限
+    [Tags]  获取指定主机的信息
+    ${resp}=  Get Node Info By Id  ${mesosslave}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Get Node Info By Id  ${mesosslave}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+主机管理-获取指定主机的信息-主机不存在
+    [Tags]  获取指定主机的信息
+    ${resp}=  Get Node Info By Id  1.1.1.1  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+主机管理-获取指定主机的容器列表-没有权限
+    [Tags]  获取指定主机的容器列表
+    ${resp}=  Get Instances Info By Id  ${mesosslave}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Get Instances Info By Id  ${mesosslave}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+主机管理-获取指定主机的容器列表-主机不存在
+    [Tags]  获取指定主机的容器列表
+    ${resp}=  Get Instances Info By Id  1111  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+主机管理-获取指定主机的镜像列表-没有权限
+    [Tags]  获取指定主机的镜像列表
+    ${resp}=  Get Images Info By Id  ${mesosslave}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Get Images Info By Id  ${mesosslave}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+主机管理-获取指定主机的镜像列表-主机不存在
+    [Tags]  获取指定主机的镜像列表
+    ${resp}=  Get Images Info By Id  1111  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+主机管理-删除指定主机上的指定镜像-没有权限
+    [Tags]  删除指定主机上的指定镜像
+    Open Connection  ${mesosslave}
+    Login  ${USERNAME}  ${PASSWORD}
+    ${output}=  Execute Command  docker load < /root/alpine.tar
+    ${imageid}=  Evaluate  'sha256:4d8dee4f28726c036f35eacd25ec6606d43e39a7252b2f8b328ac3c16509fab1'
+    ${resp}=  Delete Image By Id  ${imageid}  ${mesosslave}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${output}=  Execute Command  docker load < /root/alpine.tar
+    ${resp}=  Delete Image By Id  ${imageid}  ${mesosslave}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+主机管理-删除指定主机上的指定镜像-有容器在使用该镜像,无法删除
+    [Tags]  删除指定主机上的指定镜像
+    Open Connection  ${mesosslave}
+    Login  ${USERNAME}  ${PASSWORD}
+    ${output}=  Execute Command  docker load < /root/alpine.tar &&docker run --name=test -d alpine:3.1 sh &&docker ps -a
+    ${imageid}=  Evaluate  'sha256:4d8dee4f28726c036f35eacd25ec6606d43e39a7252b2f8b328ac3c16509fab1'
+    ${resp}=  Delete Image By Id  ${imageid}  ${mesosslave}  ${adminheaders}
+    ${output}=  Execute Command  docker rm -f test
+    Should Be Equal As Strings  ${resp.status_code}  409
+
+主机管理-删除指定主机上的指定镜像-主机不存在
+    [Tags]  删除指定主机上的指定镜像
+    Open Connection  ${mesosslave}
+    Login  ${USERNAME}  ${PASSWORD}
+    ${output}=  Execute Command  docker load < /root/alpine.tar
+    ${imageid}=  Evaluate  'sha256:4d8dee4f28726c036f35eacd25ec6606d43e39a7252b2f8b328ac3c16509fab1'
+    ${resp}=  Delete Image By Id  ${imageid}  1111  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+主机管理-获取主机上指定容器的信息-主机不存在
+    [Tags]  获取主机上指定容器的信息
+    ${resp}=  Get Instance Info By Id  ${instanceid}  9999  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+主机管理-获取主机上指定容器的信息-容器不存在
+    [Tags]  获取主机上指定容器的信息
+    ${resp}=  Get Instance Info By Id  9999  ${nodeip}  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+主机管理-获取主机上指定容器的信息-没有权限
+    [Tags]  获取主机上指定容器的信息
+    ${resp}=  Get Instance Info By Id  ${instanceid}  ${mesosslave}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Get Instance Info By Id  ${instanceid}  ${mesosslave}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+主机管理-获取主机上服务的状态-没有权限
+    [Tags]  主机管理
+    ${resp}=  Get Service By Id  ${mesosslave}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Get Service By Id  ${mesosslave}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+主机管理-获取主机上服务的状态-主机不存在
+    [Tags]  主机管理
+    ${resp}=  Get Service By Id  9999  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  404

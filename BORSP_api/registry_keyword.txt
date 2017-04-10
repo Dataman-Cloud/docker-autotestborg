@@ -1,0 +1,79 @@
+*** Settings ***
+Library        Collections
+Library        String
+Library        OperatingSystem
+Library        RequestsLibrary
+Library        Collections
+Library        XML
+Library        json
+Library        SSHLibrary
+Resource       config.txt
+
+*** Keywords ***
+Push Image to registry
+    Open Connection  ${mesosslave}
+    Login  ${USERNAME}  ${PASSWORD}
+    ${docker_registry}=  Remove String  ${SERVER}  http://
+    ${docker_registry}=  Fetch From Left  ${docker_registry}  :
+    ${cmd}=  Evaluate  'docker login '+'${docker_registry}'+':5001 -u '+'${adminname} -p '+'${adminpasswd}'
+    ${output}=  Execute Command  ${cmd}
+    ${cmd}=  Evaluate  'docker tag blackicebird/2048:latest '+'${docker_registry}'+':5001/library/2048:latest'
+    ${output}=  Execute Command  ${cmd}
+    ${cmd}=  Evaluate  'docker push '+'${docker_registry}'+':5001/library/2048:latest'
+    ${output}=  Execute Command  ${cmd}
+
+Create Namespace
+  [Arguments]  ${groupid}  ${data}  ${headers}
+  Create Session  shurenyun  ${SERVER}
+  ${path}=  Evaluate  '/v1/registry/groups/'+'${groupid}'+'/namespace'
+  ${resp}=  Post Request  shurenyun  ${path}  data=${data}  headers=${headers}
+  log  ${resp.text}
+  [Return]  ${resp}
+
+Get Namespace
+    [Arguments]  ${groupid}  ${headers}
+    Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/registry/groups/'+'${groupid}'+'/namespace'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get ImageCount
+    [Arguments]  ${namespace}  ${headers}
+    Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/registry/namespace/' +'${namespace}'+'/imageCount'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Delete Namespace
+  [Arguments]  ${groupid}  ${namespace}  ${headers}
+  Create Session  shurenyun  ${SERVER}
+  ${path}=  Evaluate  '/v1/registry/groups/'+'${groupid}'+'/namespace/'+'${namespace}'
+  ${resp}=  Delete Request  shurenyun  ${path}  headers=${headers}
+  log  ${resp.text}
+  [Return]  ${resp}
+
+Get ImageList
+    [Arguments]  ${headers}
+    Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/registry/repositories/mine'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get TagList
+    [Arguments]  ${groupid}  ${namespace}  ${image}  ${headers}
+    Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/registry/groups/'+'${groupid}'+'/namespace/'+'${namespace}'+'/${image}'+'/tags'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Delete Image
+  [Arguments]  ${namespace}  ${image}  ${headers}
+  Create Session  shurenyun  ${SERVER}
+  ${path}=  Evaluate  '/v1/registry/manifests/'+'${namespace}'+'/${image}'
+  ${resp}=  Delete Request  shurenyun  ${path}  headers=${headers}
+  log  ${resp.text}
+  [Return]  ${resp}

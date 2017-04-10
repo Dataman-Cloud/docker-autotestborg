@@ -1,0 +1,25 @@
+*** Settings ***
+Suite Setup     Get Token
+Suite Teardown  Delete All Sessions
+Library         Collections
+Library         String
+Library         OperatingSystem
+Library         RequestsLibrary
+Library         Collections
+Library         XML
+Library         json
+Library         SSHLibrary
+Resource        config.txt
+
+*** Test Cases ***
+版本信息-版本
+    [Tags]  版本信息
+    ${resp}=  Get Request  shurenyun  /v1/version
+    log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+健康检查-健康检查
+    [Tags]  集群管理
+    ${resp}=  Get Request  shurenyun  /v1/health
+    log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200

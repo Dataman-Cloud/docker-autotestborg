@@ -1,0 +1,328 @@
+*** Settings ***
+Library         Collections
+Library         String
+Library         OperatingSystem
+Library         RequestsLibrary
+Library         Collections
+Library         XML
+Library         json
+Resource        config.txt
+
+*** Keywords ***
+Login Sry
+    [Arguments]  ${data}
+    Create Session  shurenyun  ${SERVER}
+    ${resp}=  Post Request  shurenyun  /v1/login  data=${data}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Logout
+    [Arguments]  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${resp}=  Post Request  shurenyun  /v1/logout  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Create User Group
+    [Arguments]  ${data}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${resp}=  Post Request  ${domain}  /v1/groups  data=${data}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Create Cluster
+    [Arguments]  ${data}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${resp}=  Post Request  ${domain}  /v1/clusters  data=${data}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get App List
+    [Arguments]  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${resp}=  Get Request  shurenyun  /v1/apps  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get App By Appid
+    [Arguments]  ${appid}  ${headers}
+    ${path}=  Evaluate  '/v1/apps/'+'${appid}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get Containers By Appid
+    [Arguments]  ${appid}  ${headers}
+    ${path}=  Evaluate  '/v1/apps/'+'${appid}'+'/containers'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get Tasks By Appid
+    [Arguments]  ${appid}  ${headers}
+    ${path}=  Evaluate  '/v1/apps/'+'${appid}'+'/tasks'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get Versions By Appid
+    [Arguments]  ${appid}  ${headers}
+    ${path}=  Evaluate  '/v1/apps/'+'${appid}'+'/versions'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Create App
+    [Arguments]  ${data}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${resp}=  Post Request  shurenyun  /v1/apps  data=${data}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Update App
+    [Arguments]  ${appid}  ${data}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/apps/'+'${appid}'
+    ${resp}=  Put Request  shurenyun  ${path}  data=${data}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Delete Cluster
+    [Arguments]  ${clusterid}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v2/clusters/'+str(${clusterid})
+    ${resp}=  Delete Request  shurenyun  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get Cluster List
+    [Arguments]  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${resp}=  Get Request  shurenyun  /v1/clusters  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get Nodes
+    [Arguments]  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${resp}=  Get Request  shurenyun  /v1/nodes_group_by_vclusters  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get All Nodes
+    [Arguments]  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${resp}=  Get Request  shurenyun  /v1/nodes  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get Node Info By Id
+    [Arguments]  ${nodeip}  ${headers}
+    Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/nodes/'+'${nodeip}'+'/info'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get Instances Info By Id
+    [Arguments]  ${nodeip}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/nodes/'+'${nodeip}'+'/instances'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get Service By Id
+    [Arguments]  ${nodeip}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/nodes/'+'${nodeip}'+'/services'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get Images Info By Id
+    [Arguments]  ${nodeip}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/nodes/'+'${nodeip}'+'/images'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get Instance Info By Id
+    [Arguments]  ${instanceid}  ${nodeip}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/nodes/'+'${nodeip}'+'/instances/'+'${instanceid}'+'/info'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get Image Info By Id
+    [Arguments]  ${nodeip}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/nodes/'+'${nodeip}'+'/images'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Delete Image By Id
+    [Arguments]  ${imageid}  ${nodeip}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  'v1/nodes/'+'${nodeip}'+'/images/'+'${imageid}'
+    ${resp}=  Delete Request  shurenyun  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get All Metrics
+    [Arguments]  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${resp}=  Get Request  shurenyun  /v1/metrics/snapshot  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get Cluster By Group Id
+    [Arguments]  ${groupid}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/groups/'+'${groupid}'+'/clusters'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get Cluster By Id
+    [Arguments]  ${cluster_id}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/clusters/'+str(${cluster_id})
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Join User Group
+    [Arguments]  ${data}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${resp}=  Post Request  ${domain}  /v1/accounts/joingroup  data=${data}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Leave User Group
+    [Arguments]  ${userid}  ${groupid}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/accounts/'+str(${userid})+'/groups/'+str(${groupid})
+    ${resp}=  Delete Request  ${domain}  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Change Password
+    [Arguments]  ${data}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${resp}=  Put Request  ${domain}  /v1/password  data=${data}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Reset Password
+    [Arguments]  ${userid}  ${data}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/accounts/'+str(${userid})+'/resetpassword'
+    ${resp}=  Put Request  ${domain}  ${path}  data=${data}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get All User Group
+    [Arguments]  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${resp}=  Get Request  ${domain}  /v1/groups  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get All User
+    [Arguments]  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${resp}=  Get Request  ${domain}  /v1/accounts  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get User By Id
+    [Arguments]  ${userid}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/accounts/'+str(${userid})
+    ${resp}=  Get Request  ${domain}  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get All User Group Accounts By Id
+    [Arguments]  ${groupid}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/groups/'+str(${groupid})+'/accounts'
+    ${resp}=  Get Request  ${domain}  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get User Group By Id
+    [Arguments]  ${groupid}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/groups/'+str(${groupid})
+    ${resp}=  Get Request  ${domain}  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Update User Group
+    [Arguments]  ${data}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${resp}=  Put Request  ${domain}  /v1/groups  data=${data}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Delete User Group
+    [Arguments]  ${groupId}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/groups/'+str(${groupId})
+    ${resp}=  Delete Request  ${domain}  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Create User
+    [Arguments]  ${data}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${resp}=  Post Request  ${domain}  /v1/accounts  data=${data}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Disable User
+    [Arguments]  ${userid}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/accounts/' + str(${userid})+'/disable'
+    ${resp}=  Put Request  ${domain}  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Enable User
+    [Arguments]  ${userid}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/accounts/' + str(${userid})+'/enable'
+    ${resp}=  Put Request  ${domain}  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Update User
+    [Arguments]  ${data}  ${headers}
+    #Create Session  shurenyun  ${SERVER}
+    ${resp}=  Put Request  ${domain}  /v1/accounts  data=${data}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Delete User
+    [Arguments]  ${userid}  ${headers}
+    ${path}=  Evaluate  '/v1/accounts/' + str(${userid})
+    ${resp}=  Delete Request  ${domain}  ${path}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Get Aboutme
+    [Arguments]  ${headers}
+    ${resp}=  Get Request  ${domain}  /v1/aboutme  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
+Add Registry Auth
+    [Arguments]  ${data}  ${headers}
+    ${resp}=  Post Request  ${domain}  /v1/external_registries  data=${data}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}

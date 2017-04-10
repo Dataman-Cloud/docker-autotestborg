@@ -1,0 +1,145 @@
+*** Settings ***
+Suite Setup     Get Token
+Suite Teardown  Delete All Sessions
+Library         Collections
+Library         String
+Library         OperatingSystem
+Library         RequestsLibrary
+Library         Collections
+Library         XML
+Library         json
+Library         SSHLibrary
+Resource        config.txt
+
+*** Test Cases ***
+case 1 获取应用列表 GET /v2/apps
+    [Tags]  1  应用管理v2  ha
+    Create Session  shurenyun  ${SERVER}
+    ${resp}=  Get Request  shurenyun  /v2/apps  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+case 2 新建应用 POST /v2/apps
+    [Tags]  2  应用管理v2  ha
+    ${name}=  Get Randomstring
+    ${appname}=  Evaluate  'test' + '${name}'
+    Set Global Variable  ${appname}
+    ${appjson}=  Get Binary File  ${CURDIR}${/}json/create_app_v2_nohealthcheck.json
+    ${data} =  Replace Variables  ${appjson}
+    Log  ${data}
+    ${resp}=  Post Request  shurenyun  /v2/apps  data=${data}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  201
+
+case 3 获取指定应用的信息 GET /v2/apps/:aid
+    [Tags]  3  应用管理v2  ha
+    Sleep  20
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}'+'-datamanmesos'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    ${taskid}=  Evaluate  '${resp.json()['data']['tasks'][0]['id']}'
+    ${node_ip}=  Evaluate  '${resp.json()['data']['tasks'][0]['agentHostname']}'
+    ${slave_id}=  Evaluate  '${resp.json()['data']['tasks'][0]['agentID']}'
+    Set Global Variable  ${taskid}
+    Set Global Variable  ${node_ip}
+    Set Global Variable  ${slave_id}
+
+case 4 下载指定实例的stdout文件
+    [Tags]  4  应用管理v2
+    ${path}=  Evaluate  '/v2/tasks/'+'${taskid}'+'/'+'${node_ip}'+'/'+'${slave_id}'+'/stdout'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+case 4.5 下载指定实例的stderr文件
+    [Tags]  4.5  应用管理v2
+    ${path}=  Evaluate  '/v2/tasks/'+'${taskid}'+'/'+'${node_ip}'+'/'+'${slave_id}'+'/stderr'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+case 5 更新应用 PUT /v2/apps/:aid
+    [Tags]  5  应用管理v2  ha
+    Sleep  5
+    ${appjson}=  Get Binary File  ${CURDIR}${/}json/update_app_v2.json
+    ${data}=  Replace Variables  ${appjson}
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-datamanmesos'
+    ${resp}=  Put Request  shurenyun  ${path}  data=${data}  headers=${headers}
+    Log  ${resp.json()}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+case 6 继续更新 PATCH /v2/apps/:aid/proceed-update
+    [Tags]  6  应用管理v2  ha
+    Sleep  5
+    ${data}=  Evaluate  '{"instances": 1}'
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-datamanmesos'+'/proceed-update'
+    ${resp}=  Patch Request  shurenyun  ${path}  data=${data}  headers=${headers}
+    Log  ${resp.json()}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+case 7 取消更新 PATCH /v2/apps/:aid/cancel-update
+    [Tags]  7  应用管理v2  ha
+    Sleep  10
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-datamanmesos'+'/cancel-update'
+    ${resp}=  Patch Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.json()}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+case 8 增加容器个数 PATCH /v2/apps/:aid/scale-up
+    [Tags]  8  应用管理v2
+    Sleep  5
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-datamanmesos'+'/scale-up'
+    ${data}=  Evaluate  '{"instances": 1}'
+    ${resp}=  Patch Request  shurenyun  ${path}  data=${data}  headers=${headers}
+    Log  ${resp.json()}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+case 9 减少容器个数 /v2/apps/:aid/scale-down
+    [Tags]  9  应用管理v2
+    Sleep  5
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-datamanmesos'+'/scale-down'
+    ${data}=  Evaluate  '{"instances": 3}'
+    ${resp}=  Patch Request  shurenyun  ${path}  data=${data}  headers=${headers}
+    Log  ${resp.json()}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+case 10 获取应用版本列表 /v2/apps/:aid/versions
+    [Tags]  10  应用管理v2
+    #更新
+    Sleep  5
+    ${appjson}=  Get Binary File  ${CURDIR}${/}json/update_app_v2_again.json
+    ${data}=  Replace Variables  ${appjson}
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-datamanmesos'
+    ${resp}=  Put Request  shurenyun  ${path}  data=${data}  headers=${headers}
+    Log  ${resp.json()}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    #查历史版本
+    Sleep  5
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-datamanmesos'+'/versions'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.json()}
+    ${version}=  Evaluate  ${resp.json()['data'][0]['id']}
+    Set Global Variable  ${version}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+case 11 获取应用指定版本 /v2/apps/:aid/versions/:vid
+    [Tags]  11  应用管理v2
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-datamanmesos'+'/versions/'+'${version}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.json()}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+case 12 获取应用指定实例 /v2/apps/:aid/tasks/:taskindex
+    [Tags]  12  应用管理v2
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-datamanmesos'+'/tasks/0'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.json()}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+case 13 删除指定应用 DELETE /v2/apps/:aid
+    [Tags]  13  应用管理  ha
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-datamanmesos'
+    ${resp}=  Delete Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200

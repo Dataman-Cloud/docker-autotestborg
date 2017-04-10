@@ -1,0 +1,10 @@
+FROM demoregistry.dataman-inc.com/library/centos7-base:latest
+
+RUN yum install -y python-devel openssl-devel gcc && yum clean all
+
+RUN curl "https://bootstrap.pypa.io/get-pip.py"|python 
+
+RUN pip --no-cache-dir  install requests  && pip --no-cache-dir install  robotframework-requests && pip --no-cache-dir install robotframework-sshlibrary
+
+RUN localedef -i en_US -f UTF-8 en_US.UTF-8
+ENV LANG en_US.UTF-8

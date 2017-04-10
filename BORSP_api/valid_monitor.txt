@@ -1,0 +1,131 @@
+*** Settings ***
+Suite Setup     Create App
+Suite Teardown  Delete App
+Library         Collections
+Library         String
+Library         OperatingSystem
+Library         RequestsLibrary
+Library         Collections
+Library         XML
+Library         json
+Library         SSHLibrary
+Library         DateTime
+Resource        config.txt
+
+*** Keywords ***
+Get now time
+    ${time} =  Get Current Date
+    ${time2} =  Convert Date  ${time}  epoch
+    ${tt} =  Convert To String  ${time2}
+    ${tt} =  Fetch From Left  ${tt}  .
+    [Return]  ${tt}
+
+Create App
+    Get Token
+    Create Session  shurenyun  ${SERVER}
+
+    ${name}=  Get Randomstring
+    ${appname}=  Evaluate  'test' + '${name}'
+    Set Global Variable  ${appname}
+    ${appjson}=  Get Binary File  ${CURDIR}${/}json/create_app_v2_nohealthcheck.json
+    ${data} =  Replace Variables  ${appjson}
+    Log  ${data}
+    ${resp}=  Post Request  shurenyun  /v2/apps  data=${data}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  201
+    Sleep  10
+    #获取应用状态
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-datamanmesos'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    ${state}=  Evaluate  '${resp.json()['data']['state']}'
+    Run Keyword If  '${state}' != 'normal'  Fail
+
+    ${time1}=   Get now time
+    Set Global Variable  ${time1}
+
+Delete App
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-datamanmesos'
+    ${resp}=  Delete Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    Delete All Sessions
+
+*** Test Cases ***
+MO-07 监控-快捷查询-根据集群+应用查询
+    [Tags]  11
+    Sleep  20
+    ${time2}=   Get now time
+    Set Global Variable  ${time2}
+    ${path}=  Evaluate  'v1/mola/metrics?app='+'${appname}'+'&cluster=datamanmesos&metric=memory&step=5&start='+'${time1}'+'&end='+'${time2}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    ${value2} =  Evaluate  '${resp.json()['data']['memory']['usage'][0]['values'][0][1]}'
+    Run Keyword If  '${value2}' == '0'  Fail   value is zero
+
+MO-08 监控-快捷查询-根据实例查询 / MO-26具有多实例的应用的监控信息查询
+    ${path}=  Evaluate  'v1/mola/metrics?app='+'${appname}'+'&cluster=datamanmesos&metric=memory&step=5&start='+'${time1}'+'&end='+'${time2}'+'&task=0'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    ${value2} =  Evaluate  '${resp.json()['data']['memory']['usage'][0]['values'][0][1]}'
+    Run Keyword If  '${value2}' == '0'  Fail   value is zero
+
+MO-09 监控-快捷查询-根据监控指标查询
+    ${path}=  Evaluate  'v1/mola/metrics?app='+'${appname}'+'&cluster=datamanmesos&metric=cpu&step=5&start='+'${time1}'+'&end='+'${time2}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    ${value2} =  Evaluate  '${resp.json()['data']['cpu']['usage'][0]['values'][0][1]}'
+    #Run Keyword If  '${value2}' == '0'  Fail
+
+    ${path}=  Evaluate  'v1/mola/metrics?app='+'${appname}'+'&cluster=datamanmesos&metric=memory_usage&step=5&start='+'${time1}'+'&end='+'${time2}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    ${value2} =  Evaluate  '${resp.json()['data']['memory']['usage_bytes'][0]['values'][0][1]}'
+    Run Keyword If  '${value2}' == '0'  Fail
+
+    ${path}=  Evaluate  'v1/mola/metrics?app='+'${appname}'+'&cluster=datamanmesos&metric=memory_total&step=5&start='+'${time1}'+'&end='+'${time2}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    ${value2} =  Evaluate  '${resp.json()['data']['memory']['total_bytes'][0]['values'][0][1]}'
+    Run Keyword If  '${value2}' == '0'  Fail
+
+    ${path}=  Evaluate  'v1/mola/metrics?app='+'${appname}'+'&cluster=datamanmesos&metric=network_rx&step=5&start='+'${time1}'+'&end='+'${time2}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    ${value2} =  Evaluate  '${resp.json()['data']['network']['receive'][0]['values'][0][1]}'
+    Run Keyword If  '${value2}' == '0'  Fail
+
+    ${path}=  Evaluate  'v1/mola/metrics?app='+'${appname}'+'&cluster=datamanmesos&metric=network_tx&step=5&start='+'${time1}'+'&end='+'${time2}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    ${value2} =  Evaluate  '${resp.json()['data']['network']['transmit'][0]['values'][0][1]}'
+    Run Keyword If  '${value2}' == '0'  Fail
+
+    ${path}=  Evaluate  'v1/mola/metrics?app='+'${appname}'+'&cluster=datamanmesos&metric=fs_read&step=5&start='+'${time1}'+'&end='+'${time2}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    ${value2} =  Evaluate  '${resp.json()['data']['filesystem']['read'][0]['values'][0][1]}'
+    #Run Keyword If  '${value2}' == '0'  Fail
+
+    ${path}=  Evaluate  'v1/mola/metrics?app='+'${appname}'+'&cluster=datamanmesos&metric=fs_write&step=5&start='+'${time1}'+'&end='+'${time2}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    ${value2} =  Evaluate  '${resp.json()['data']['filesystem']['write'][0]['values'][0][1]}'
+    #Run Keyword If  '${value2}' == '0'  Fail   value is zero
+
+MO-18 监控-高级查询-根据集群+应用查询 / MO-24 监控-时间-起止-根据输入时间段查询
+    ${path}=  Evaluate  'v1/mola/metrics?app='+'${appname}'+'&expr=container_cpu_system_seconds_total&step=5&start='+'${time1}'+'&end='+'${time2}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+

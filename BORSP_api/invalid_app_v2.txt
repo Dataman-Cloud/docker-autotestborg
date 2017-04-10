@@ -1,0 +1,163 @@
+*** Settings ***
+Suite Setup     Get Token
+Suite Teardown  Delete All Sessions
+Library         Collections
+Library         String
+Library         OperatingSystem
+Library         RequestsLibrary
+Library         Collections
+Library         XML
+Library         json
+Library         SSHLibrary
+Resource        config.txt
+
+*** Test Cases ***
+case 1 新建应用 GET /v2/apps
+    [Tags]  0  应用管理v2  ha  111
+    ${name}=  Get Randomstring
+    ${appname}=  Evaluate  'test' + '${name}'
+    Set Global Variable  ${appname}
+    ${appjson}=  Get Binary File  ${CURDIR}${/}json/create_app_v2.json
+    ${data} =  Replace Variables  ${appjson}
+    Log  ${data}
+    ${resp}=  Post Request  shurenyun  /v2/apps  data=${data}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  201
+
+case 2 新建应用 GET /v2/apps 没有data
+    [Tags]  1  应用管理v2  ha
+    ${name}=  Get Randomstring
+    ${resp}=  Post Request  shurenyun  /v2/apps  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  400
+#--------------------------------------------------------------------------------
+case 3 获取指定应用的信息 GET /v2/apps/:aid aid不存在
+    [Tags]  2  应用管理v2  ha
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  404
+#--------------------------------------------------------------------------------
+case 4 更新应用 PUT /v2/apps/:aid aid不存在
+    [Tags]  4  应用管理v2  ha
+    ${appjson}=  Get Binary File  ${CURDIR}${/}json/update_app_v2.json
+    ${data}=  Replace Variables  ${appjson}
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'
+    ${resp}=  Put Request  shurenyun  ${path}  data=${data}  headers=${headers}
+    Log  ${resp.json()}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+case 5 更新应用 PUT /v2/apps/:aid 缺少data
+    [Tags]  5  应用管理v2  ha
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-datamanmesos'
+    ${resp}=  Put Request  shurenyun  ${path}  headers=${headers}
+    Log  ${resp.json()}
+    Should Be Equal As Strings  ${resp.status_code}  400
+#-------------------------------------------------------------------------------
+case 6 继续更新 /v2/apps/:aid/proceed-update aid不存在
+    [Tags]  6  应用管理v2  ha
+    ${data}=  Evaluate  '{"instances": 1}'
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'/proceed-update'
+    ${resp}=  Put Request  shurenyun  ${path}  data=${data}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+case 7 继续更新 /v2/apps/:aid/proceed-update 缺少aid
+    [Tags]  7  应用管理v2  ha
+    ${data}=  Evaluate  '{"instances": 1}'
+    ${path}=  Evaluate  '/v2/apps/proceed-update'
+    ${resp}=  Put Request  shurenyun  ${path}  data=${data}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+case 8 继续更新 /v2/apps/:aid/proceed-update 缺少data
+    [Tags]  75  应用管理v2  ha
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'/proceed-update'
+    ${resp}=  Put Request  shurenyun  ${path}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  404
+#-------------------------------------------------------------------------------
+case 9 取消更新 /v2/apps/:aid/cancel-update aid不存在
+    [Tags]  8  应用管理v2  ha
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'/cancel-update'
+    ${resp}=  Put Request  shurenyun  ${path}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+case 10 取消更新 /v2/apps/:aid/cancel-update 缺少aid
+    [Tags]  9  应用管理v2  ha
+    ${path}=  Evaluate  '/v2/apps/cancel-update'
+    ${resp}=  Put Request  shurenyun  ${path}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  404
+#-------------------------------------------------------------------------------
+case 11 增加容器个数 /v2/apps/:aid/scale-up aid不存在
+    [Tags]  10  应用管理v2  ha
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'/scale-up'
+    ${data}=  Evaluate  '{"instances": 1}'
+    ${resp}=  Put Request  shurenyun  ${path}  data=${data}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+case 12 增加容器个数 /v2/apps/:aid/scale-up 缺少aid
+    [Tags]  11  应用管理v2  ha
+    ${path}=  Evaluate  '/v2/apps/scale-up'
+    ${data}=  Evaluate  '{"instances": 1}'
+    ${resp}=  Put Request  shurenyun  ${path}  data=${data}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  404
+#-------------------------------------------------------------------------------
+case 13 减少容器个数 /v2/apps/:aid/scale-down aid不存在
+    [Tags]  12  应用管理v2  ha
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'/scale-down'
+    ${data}=  Evaluate  '{"instances": 1}'
+    ${resp}=  Put Request  shurenyun  ${path}  data=${data}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+case 14 减少容器个数 /v2/apps/:aid/scale-down 缺少aid
+    [Tags]  13  应用管理v2  ha
+    ${path}=  Evaluate  '/v2/apps/scale-down'
+    ${data}=  Evaluate  '{"instances": 1}'
+    ${resp}=  Put Request  shurenyun  ${path}  data=${data}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  404
+#-------------------------------------------------------------------------------
+case 15 获取应用版本列表 /v2/apps/:aid/versions aid不存在
+    [Tags]  14  应用管理v2  ha
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-datamanmesos'+'/versions'
+    ${resp}=  Put Request  shurenyun  ${path}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+case 16 获取应用版本列表 /v2/apps/:aid/versions 缺少aid
+    [Tags]  15  应用管理v2  ha
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-datamanmesos'+'/versions'
+    ${resp}=  Put Request  shurenyun  ${path}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  404
+#-------------------------------------------------------------------------------
+case 17 获取应用指定版本 /v2/apps/:aid/versions/:vid vid不存在
+    [Tags]  16  应用管理v2  ha
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-datamanmesos'+'/versions/'+'123412534643574567'
+    ${resp}=  Put Request  shurenyun  ${path}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+case 18 获取应用指定版本 /v2/apps/:aid/versions/:vid 缺少vid
+    [Tags]  17  应用管理v2  ha
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-datamanmesos'+'/versions'
+    ${resp}=  Put Request  shurenyun  ${path}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  404
+#-------------------------------------------------------------------------------
+case 19 获取应用指定实例 /v2/apps/:aid/tasks/:taskindex taskid不存在
+    [Tags]  18  应用管理v2  ha
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-datamanmesos'+'/tasks/'+'12341235456456756'
+    ${resp}=  Put Request  shurenyun  ${path}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+case 20 获取应用指定实例 /v2/apps/:aid/tasks/:taskindex 缺少taskid
+    [Tags]  19  应用管理v2  ha
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-datamanmesos'+'/tasks'
+    ${resp}=  Put Request  shurenyun  ${path}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  404
+#--------------------------------------------------------------------------------
+case 21 删除指定应用 DELETE /v2/apps/:aid aid不存在
+    [Tags]  20  应用管理v2  ha
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'
+    ${resp}=  Delete Request  shurenyun  ${path}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+case 22 删除指定应用 DELETE /v2/apps/:aid 缺少aid
+    [Tags]  21  应用管理v2  ha
+    ${path}=  Evaluate  '/v2/apps/'
+    ${resp}=  Delete Request  shurenyun  ${path}  headers=${headers}
+    Should Be Equal As Strings  ${resp.status_code}  404

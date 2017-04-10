@@ -1,0 +1,258 @@
+*** Settings ***
+Suite Setup     Create Test Data
+Suite Teardown  Delete Test Data
+Library         Collections
+Library         String
+Library         OperatingSystem
+Library         RequestsLibrary
+Library         Collections
+Library         XML
+Library         json
+Resource        ./all_api.txt
+Resource        config.txt
+
+*** Test Cases ***
+用户管理-登录-密码错误
+    [Tags]  登录
+    ${data}=  Set Variable  {"username":"${adminname}","password":"6565566556"}
+    ${resp}=  Login Sry  ${data}
+    Should Be Equal As Strings  ${resp.status_code}  400
+
+用户管理-登录-用户名不存在
+    [Tags]  登录
+    ${data}=  Set Variable  {"username":"2655625526556565656","password":"6565566556"}
+    ${resp}=  Login Sry  ${data}
+    Should Be Equal As Strings  ${resp.status_code}  400
+
+用户管理-登录-字段错误
+    [Tags]  登录
+    ${data}=  Set Variable  {"usernames":"2655625526556565656","password":"6565566556"}
+    ${resp}=  Login Sry  ${data}
+    Should Be Equal As Strings  ${resp.status_code}  400
+
+用户组管理-创建用户组-没有权限
+    [Tags]  创建用户组
+    ${testgroupName}=  Get Randomstring
+    ${testgroupName}=  Evaluate  'apitest'+'${testgroupName}'
+    ${data} =  Set Variable  {"name": "${testgroupName}" , "description": "cdscds"}
+    ${resp}=  Create User Group  ${data}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Create User Group  ${data}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+用户组管理-创建用户组-用户组名冲突
+    [Tags]  创建用户组
+    ${data} =  Set Variable  {"name": "${groupname1}" , "description": "cdscds"}
+    ${resp}=  Create User Group  ${data}  ${adminheaders}
+    log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  409
+
+用户管理-创建用户-用户名已经存在
+    [Tags]  创建用户
+    ${email}=  Evaluate  '${username1}'+ '@dataman-inc.com'
+    ${data}=  Set Variable  {"email":"${email}","password":"admin1234","title":"职位, 可不填","userName":"${username1}","name":"真实名称, 可不填","phone":"手机号, 可不填","accountGroups":[{"groupId":${groupid1},"role":"owner"}]}
+    ${resp}=  Create User  data=${data}  headers=${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  409
+
+用户管理-创建用户-没有权限
+    [Tags]  创建用户
+    ${testemail}=  Evaluate  '${username1}'+ '@dataman-inc.com'
+    ${data}=  Set Variable  {"email":"${testemail}","password":"admin1234","title":"职位, 可不填","userName":"${username1}","name":"真实名称, 可不填","phone":"手机号, 可不填","accountGroups":[{"groupId":${groupid1},"role":"owner"}]}
+    ${resp}=  Create User  data=${data}  headers=${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Create User  data=${data}  headers=${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+用户组管理-更新用户组-没有权限
+    [Tags]  更新用户组
+    ${groupname}=  Get Randomstring
+    ${data} =  Set Variable  {"id":${groupid1},"name": "${groupname}" , "description": "cdscds"}
+    ${resp}=  Update User Group  ${data}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Update User Group  ${data}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+用户组管理-更新用户组-参数错误
+    [Tags]  更新用户组
+    ${groupname}=  Get Randomstring
+    ${data} =  Set Variable  {"ids":${groupid1},"name": "${groupname}" , "description": "cdscds"}
+    ${resp}=  Update User Group  ${data}  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  400
+
+用户组管理-更新用户组-用户组名已经存在
+    [Tags]  更新用户组
+    ${data} =  Set Variable  {"id":${groupid1},"name": "${groupname2}" , "description": "cdscds"}
+    ${resp}=  Update User Group  ${data}  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  409
+
+用户组管理-获取所有用户组-没有权限
+    [Tags]  获取所有用户组
+    ${resp}=  Get All User Group  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Get All User Group  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+用户组管理-获取指定用户组-没有权限
+    [Tags]  获取指定用户组
+    ${resp}=  Get User Group By Id  ${groupid1}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+用户组管理-获取指定用户组的所有用户-没有权限
+    [Tags]  获取指定用户组的所有用户
+    ${resp}=  Get All User Group Accounts By Id  ${groupid1}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+用户管理-修改密码-旧密码错误
+    [Tags]  用户管理
+    ${data} =  Set Variable  {"oldPassword":"admin12345","password":"admin12345"}
+    ${resp}=  Change Password  ${data}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  400
+
+用户管理-修改密码-新密码为空
+    [Tags]  用户管理
+    ${data} =  Set Variable  {"oldPassword":"admin12345","password":""}
+    ${resp}=  Change Password  ${data}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  400
+
+用户管理-更新用户-用户不存在
+    [Tags]  更新用户
+    ${data} =  Set Variable  {"id":99999999,"email":"test@admin.com","userName":"用户名填","name":"真实名"}
+    ${resp}=  Update User  ${data}  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+用户管理-更新用户-参数错误
+    [Tags]  更新用户
+    ${data} =  Set Variable  {"ida":99999999,"email":"test@admin.com","userName":"用户名填","name":"真实名"}
+    ${resp}=  Update User  ${data}  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  400
+
+用户管理-更新用户-没有权限
+    [Tags]  更新用户
+    ${data} =  Set Variable  {"id":userid1,"email":"test@admin.com","userName":"用户名填","name":"真实名"}
+    ${resp}=  Update User  ${data}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Update User  ${data}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+用户管理-重置密码-参数错误
+    [Tags]  重置密码
+    ${data} =  Set Variable  {"passwords": "123"}
+    ${resp}=  Reset Password  ${userid1}  ${data}  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  400
+
+用户管理-重置密码-没有权限
+    [Tags]  重置密码
+    ${data} =  Set Variable  {"password": "123"}
+    ${resp}=  Reset Password  ${userid1}  ${data}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Reset Password  ${userid1}  ${data}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+用户管理-重置密码-用户不存在
+    [Tags]  重置密码
+    ${data} =  Set Variable  {"passwords": "123"}
+    ${resp}=  Reset Password  99999  ${data}  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+用户管理-加入一个用户组-参数错误
+    [Tags]  加入一个用户组
+    ${data} =  Set Variable  {"accountIds2":${userid1},"groupId":${groupid2},"role":"member"}
+    ${resp}=  Join User Group  ${data}  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  400
+
+用户管理-加入一个用户组-没有权限
+    [Tags]  加入一个用户组
+    ${data} =  Set Variable  {"accountId":${userid1},"groupId":${groupid2},"role":"member"}
+    ${resp}=  Join User Group  ${data}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Join User Group  ${data}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+用户管理-加入一个用户组-用户组不存在
+    [Tags]  加入一个用户组
+    ${data} =  Set Variable  {"accountId":${userid1},"groupId":9999,"role":"member"}
+    ${resp}=  Join User Group  ${data}  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+用户管理-加入一个用户组-用户组冲突
+    [Tags]  加入一个用户组
+    ${data} =  Set Variable  {"accountId":${userid1},"groupId":${groupid1},"role":"member"}
+    ${resp}=  Join User Group  ${data}  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  409
+
+用户管理-获取所有用户-没有权限
+    [Tags]  获取所有用户
+    ${resp}=  Get All User  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Get All User  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+用户管理-获取指定用户信息-用户不存在
+    [Tags]  获取指定用户信息
+    ${resp}=  Get User By Id  9999  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+用户管理-获取指定用户信息-没有权限
+    [Tags]  获取指定用户信息
+    ${resp}=  Get User By Id  ${userid1}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Get User By Id  ${userid1}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+用户管理-离开一个用户组-没有权限
+    [Tags]  离开一个用户组
+    ${resp}=  Leave User Group  ${userid1}  ${groupid1}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Leave User Group  ${userid1}  ${groupid1}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+用户管理-离开一个用户组-用户不存在
+    [Tags]  离开一个用户组
+    ${resp}=  Leave User Group  9999  ${groupid1}  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+用户管理-离开一个用户组-用户组不存在
+    [Tags]  离开一个用户组
+    ${resp}=  Leave User Group  ${userid1}  9999  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+用户组管理-禁用一个用户-用户不存在
+    ${resp}=  Disable User  9999  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+用户组管理-禁用一个用户-没有权限
+    ${resp}=  Disable User  ${userid1}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Disable User  ${userid1}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+用户组管理-删除用户-没有权限
+    [Tags]  删除用户
+    ${resp}=  Delete User  ${userid1}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Delete User  ${userid1}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+用户组管理-删除用户-用户不存在
+    [Tags]  删除用户
+    ${resp}=  Delete User  9999  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+用户组管理-删除用户组-没用权限
+    [Tags]  删除用户组
+    ${resp}=  Delete User Group  ${groupid1}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+    ${resp}=  Delete User Group  ${groupid1}  ${testheaders2}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+用户组管理-删除用户组-用户不存在
+    [Tags]  删除用户组
+    ${resp}=  Delete User Group  9999  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  404
+
+用户管理-登出-Token失效
+    [Tags]  登出
+    Create Session  shurenyun  ${SERVER}
+    ${errorheaders}=  Create Dictionary  Authorization=1515511515151515
+    ${resp}=  Logout  ${errorheaders}
+    Should Be Equal As Strings  ${resp.status_code}  401
