@@ -70,7 +70,7 @@ case 5 更新应用 PUT /v2/apps/:aid
     Should Be Equal As Strings  ${resp.status_code}  200
 
 case 6 继续更新 PATCH /v2/apps/:aid/proceed-update
-    [Tags]  6  应用管理v2  ha
+    [Tags]  6  应用管理v2   # ha
     Sleep  5
     ${data}=  Evaluate  '{"instances": 1}'
     ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-datamanmesos'+'/proceed-update'
