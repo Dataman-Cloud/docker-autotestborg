@@ -1,1 +1,1 @@
-centos7-autotestborg:201704101559
+library/centos7-autotestborg

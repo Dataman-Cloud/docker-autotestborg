@@ -1,4 +1,4 @@
-FROM pybot:201704101559
+FROM pybot
 
 COPY BORSP_api /BORSP_api
 
