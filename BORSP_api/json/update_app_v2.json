@@ -15,7 +15,7 @@
 "name":"port0",
 "protocol":"tcp"
 }],
-"image":"blackicebird/2048"
+"image":"offlineregistry.dataman-inc.com:5000/library/blackicebird-2048"
 }},
 "appName":"${appname}",
 "instances":3,
