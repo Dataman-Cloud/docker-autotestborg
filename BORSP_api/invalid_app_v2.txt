@@ -49,7 +49,7 @@ case 4 更新应用 PUT /v2/apps/:aid aid不存在
 
 case 5 更新应用 PUT /v2/apps/:aid 缺少data
     [Tags]  5  应用管理v2  ha
-    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-datamanmesos'
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-${CLUSTER_DC}'
     ${resp}=  Put Request  shurenyun  ${path}  headers=${headers}
     Log  ${resp.json()}
     Should Be Equal As Strings  ${resp.status_code}  400
@@ -116,37 +116,37 @@ case 14 减少容器个数 /v2/apps/:aid/scale-down 缺少aid
 #-------------------------------------------------------------------------------
 case 15 获取应用版本列表 /v2/apps/:aid/versions aid不存在
     [Tags]  14  应用管理v2  ha
-    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-datamanmesos'+'/versions'
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-${CLUSTER_DC}'+'/versions'
     ${resp}=  Put Request  shurenyun  ${path}  headers=${headers}
     Should Be Equal As Strings  ${resp.status_code}  404
 
 case 16 获取应用版本列表 /v2/apps/:aid/versions 缺少aid
     [Tags]  15  应用管理v2  ha
-    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-datamanmesos'+'/versions'
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-${CLUSTER_DC}'+'/versions'
     ${resp}=  Put Request  shurenyun  ${path}  headers=${headers}
     Should Be Equal As Strings  ${resp.status_code}  404
 #-------------------------------------------------------------------------------
 case 17 获取应用指定版本 /v2/apps/:aid/versions/:vid vid不存在
     [Tags]  16  应用管理v2  ha
-    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-datamanmesos'+'/versions/'+'123412534643574567'
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-${CLUSTER_DC}'+'/versions/'+'123412534643574567'
     ${resp}=  Put Request  shurenyun  ${path}  headers=${headers}
     Should Be Equal As Strings  ${resp.status_code}  404
 
 case 18 获取应用指定版本 /v2/apps/:aid/versions/:vid 缺少vid
     [Tags]  17  应用管理v2  ha
-    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-datamanmesos'+'/versions'
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-${CLUSTER_DC}'+'/versions'
     ${resp}=  Put Request  shurenyun  ${path}  headers=${headers}
     Should Be Equal As Strings  ${resp.status_code}  404
 #-------------------------------------------------------------------------------
 case 19 获取应用指定实例 /v2/apps/:aid/tasks/:taskindex taskid不存在
     [Tags]  18  应用管理v2  ha
-    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-datamanmesos'+'/tasks/'+'12341235456456756'
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-${CLUSTER_DC}'+'/tasks/'+'12341235456456756'
     ${resp}=  Put Request  shurenyun  ${path}  headers=${headers}
     Should Be Equal As Strings  ${resp.status_code}  404
 
 case 20 获取应用指定实例 /v2/apps/:aid/tasks/:taskindex 缺少taskid
     [Tags]  19  应用管理v2  ha
-    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-datamanmesos'+'/tasks'
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-${CLUSTER_DC}'+'/tasks'
     ${resp}=  Put Request  shurenyun  ${path}  headers=${headers}
     Should Be Equal As Strings  ${resp.status_code}  404
 #--------------------------------------------------------------------------------

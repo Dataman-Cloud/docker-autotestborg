@@ -9,6 +9,7 @@ ${adminname}    admin                   # need to check, should be adminuser, bu
 ${adminpasswd}  Admin1234                 # need to check
 ${USERNAME}     root                     # user name of mesos slave ssh
 ${PASSWORD}     123                      # password of mesos slave ssh
+${CLUSTER_DC}   dataman			# need to check , swan cluster dc , default  equal to consul dc
 #${mesosslave}     172.16.1.14            # mesos slave IP
 
 *** Keywords ***
