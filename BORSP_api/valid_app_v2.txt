@@ -34,7 +34,7 @@ case 2 新建应用 POST /v2/apps
 case 3 获取指定应用的信息 GET /v2/apps/:aid
     [Tags]  3  应用管理v2  ha
     Sleep  20
-    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}'+'-'${CLUSTER_DC}''
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}'+'-${CLUSTER_DC}'
     ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
     Log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
@@ -64,7 +64,7 @@ case 5 更新应用 PUT /v2/apps/:aid
     Sleep  5
     ${appjson}=  Get Binary File  ${CURDIR}${/}json/update_app_v2.json
     ${data}=  Replace Variables  ${appjson}
-    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-'${CLUSTER_DC}''
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-${CLUSTER_DC}'
     ${resp}=  Put Request  shurenyun  ${path}  data=${data}  headers=${headers}
     Log  ${resp.json()}
     Should Be Equal As Strings  ${resp.status_code}  200
@@ -73,7 +73,7 @@ case 6 继续更新 PATCH /v2/apps/:aid/proceed-update
     [Tags]  6  应用管理v2   # ha
     Sleep  5
     ${data}=  Evaluate  '{"instances": 1}'
-    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-'${CLUSTER_DC}''+'/proceed-update'
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-${CLUSTER_DC}'+'/proceed-update'
     ${resp}=  Patch Request  shurenyun  ${path}  data=${data}  headers=${headers}
     Log  ${resp.json()}
     Should Be Equal As Strings  ${resp.status_code}  200
@@ -81,7 +81,7 @@ case 6 继续更新 PATCH /v2/apps/:aid/proceed-update
 case 7 取消更新 PATCH /v2/apps/:aid/cancel-update
     [Tags]  7  应用管理v2  ha
     Sleep  10
-    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-'${CLUSTER_DC}''+'/cancel-update'
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-${CLUSTER_DC}'+'/cancel-update'
     ${resp}=  Patch Request  shurenyun  ${path}  headers=${headers}
     Log  ${resp.json()}
     Should Be Equal As Strings  ${resp.status_code}  200
@@ -89,7 +89,7 @@ case 7 取消更新 PATCH /v2/apps/:aid/cancel-update
 case 8 增加容器个数 PATCH /v2/apps/:aid/scale-up
     [Tags]  8  应用管理v2
     Sleep  5
-    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-'${CLUSTER_DC}''+'/scale-up'
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-${CLUSTER_DC}'+'/scale-up'
     ${data}=  Evaluate  '{"instances": 1}'
     ${resp}=  Patch Request  shurenyun  ${path}  data=${data}  headers=${headers}
     Log  ${resp.json()}
@@ -98,7 +98,7 @@ case 8 增加容器个数 PATCH /v2/apps/:aid/scale-up
 case 9 减少容器个数 /v2/apps/:aid/scale-down
     [Tags]  9  应用管理v2
     Sleep  5
-    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-'${CLUSTER_DC}''+'/scale-down'
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-${CLUSTER_DC}'+'/scale-down'
     ${data}=  Evaluate  '{"instances": 3}'
     ${resp}=  Patch Request  shurenyun  ${path}  data=${data}  headers=${headers}
     Log  ${resp.json()}
@@ -110,13 +110,13 @@ case 10 获取应用版本列表 /v2/apps/:aid/versions
     Sleep  5
     ${appjson}=  Get Binary File  ${CURDIR}${/}json/update_app_v2_again.json
     ${data}=  Replace Variables  ${appjson}
-    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-'${CLUSTER_DC}''
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-${CLUSTER_DC}'
     ${resp}=  Put Request  shurenyun  ${path}  data=${data}  headers=${headers}
     Log  ${resp.json()}
     Should Be Equal As Strings  ${resp.status_code}  200
     #查历史版本
     Sleep  5
-    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-'${CLUSTER_DC}''+'/versions'
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-${CLUSTER_DC}'+'/versions'
     ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
     Log  ${resp.json()}
     ${version}=  Evaluate  ${resp.json()['data'][0]['id']}
@@ -125,21 +125,21 @@ case 10 获取应用版本列表 /v2/apps/:aid/versions
 
 case 11 获取应用指定版本 /v2/apps/:aid/versions/:vid
     [Tags]  11  应用管理v2
-    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-'${CLUSTER_DC}''+'/versions/'+'${version}'
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-${CLUSTER_DC}'+'/versions/'+'${version}'
     ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
     Log  ${resp.json()}
     Should Be Equal As Strings  ${resp.status_code}  200
 
 case 12 获取应用指定实例 /v2/apps/:aid/tasks/:taskindex
     [Tags]  12  应用管理v2
-    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-'${CLUSTER_DC}''+'/tasks/0'
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-${CLUSTER_DC}'+'/tasks/0'
     ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
     Log  ${resp.json()}
     Should Be Equal As Strings  ${resp.status_code}  200
 
 case 13 删除指定应用 DELETE /v2/apps/:aid
     [Tags]  13  应用管理  ha
-    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-'${CLUSTER_DC}''
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-${adminname}-${CLUSTER_DC}'
     ${resp}=  Delete Request  shurenyun  ${path}  headers=${headers}
     Log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
