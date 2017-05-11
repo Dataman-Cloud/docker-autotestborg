@@ -51,7 +51,7 @@ case 4 集群管理-超级管理员-获得按vcluster分组的node列表
 
 case 5 集群管理-超级管理员-获得用户组的vcluster列表
     [Tags]  集群管理  ha
-    ${path}=  Evaluate  '/v1/groups/'+'${GroupId}'+'/clusters'
+    ${path}=  Evaluate  '/v1/group_clusters/'+'${GroupId}'
     ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
     log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
