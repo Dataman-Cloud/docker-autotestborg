@@ -1,4 +1,5 @@
 *** Settings ***
+Suite Setup     Create Test Data
 Suite Teardown  Delete All Sessions
 Library         Collections
 Library         String
@@ -10,8 +11,8 @@ Library         json
 Resource        config.txt
 
 *** Test Cases ***
-用户管理-登录
-    [Tags]  用户管理
+case 1 用户管理-登录
+    [Tags]  用户管理  1
     ${data}=  Set Variable  {"userName":"${adminname}","password":"${adminpasswd}"}
     ${resp}=  Login Sry  ${data}
     Should Be Equal As Strings  ${resp.status_code}  200
@@ -19,8 +20,8 @@ Resource        config.txt
     ${adminheaders}=  Create Dictionary  Authorization=${token}
     Set Global Variable  ${adminheaders}
 
-用户组管理-超级管理员-创建用户组
-    [Tags]  用户组管理
+case 2 用户组管理-超级管理员-创建用户组
+    [Tags]  用户组管理  2
     ${groupName}=  Get Randomstring
     ${groupName}=  Evaluate  'apitest'+'${groupName}'
     ${data} =  Set Variable  {"name": "${groupName}" , "description": "cdscds"}
@@ -29,18 +30,18 @@ Resource        config.txt
     ${groupid}=  Evaluate  '${resp.json()['data']['id']}'
     Set Global Variable  ${groupid}
 
-用户管理-超级管理员-创建用户
-    [Tags]  用户管理
+case 3 用户管理-超级管理员-创建用户
+    [Tags]  用户管理  3
     ${username}=  Get Randomstring
     Set Global Variable  ${username}
     ${email}=  Evaluate  '${username}'+ '@dataman-inc.com'
     Set Global Variable  ${email}
-    ${data}=  Set Variable  {"email":"${email}","password":"admin1234","title":"职位, 可不填","userName":"${username}","name":"真实名称, 可不填","phone":"手机号, 可不填","accountGroups":[{"groupId":${groupid},"role":"owner"}]}
+    ${data}=  Set Variable  {"email":"${email}","password":"admin1234","title":"职位, 可不填","userName":"${username}","name":"真实名称, 可不填","phone":"手机号, 可不填","accountGroups":[{"groupID":${groupid},"roleID":2}]}
     ${resp}=  Create User  ${data}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-用户管理-获取当前用户信息
-    [Tags]  用户管理
+case 4 用户管理-获取当前用户信息
+    [Tags]  用户管理  4
     ${data} =  Set Variable  {"userName":"${username}","password":"admin1234"}
     ${resp}=  Login Sry  ${data}
     ${testtoken}=  Evaluate  '${resp.json()['data']}'
@@ -51,8 +52,8 @@ Resource        config.txt
     ${userid}=  Evaluate  '${resp.json()['data']['id']}'
     Set Global Variable  ${userid}
 
-用户组管理-超级管理员-更新用户组
-    [Tags]  用户组管理
+case 5 用户组管理-超级管理员-更新用户组
+    [Tags]  用户组管理  5
     Create Session  ${domain}  ${SERVER}
     ${groupname}=  Get Randomstring
     ${groupname}=  Evaluate  'apitest'+'${groupname}'
@@ -60,23 +61,23 @@ Resource        config.txt
     ${resp}=  Update User Group  ${data}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-用户组管理-超级管理员-获取所有用户组
-    [Tags]  用户组管理
+case 6 用户组管理-超级管理员-获取所有用户组
+    [Tags]  用户组管理  6
     ${resp}=  Get All User Group  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-用户组管理-超级管理员-获取指定用户组
-    [Tags]  用户组管理
+case 7 用户组管理-超级管理员-获取指定用户组
+    [Tags]  用户组管理  7
     ${resp}=  Get User Group By Id  ${groupid}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-用户组管理-超级管理员-获取指定用户组的所有用户
-    [Tags]  用户组管理
+case 8 用户组管理-超级管理员-获取指定用户组的所有用户
+    [Tags]  用户组管理  8
     ${resp}=  Get All User Group Accounts By Id  ${groupid}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-用户管理-修改密码
-    [Tags]  用户管理
+case 9 用户管理-修改密码
+    [Tags]  用户管理  9
     ${data} =  Set Variable  {"oldPassword":"admin1234","password":"admin12345"}
     ${resp}=  Change Password  data=${data}  headers=${testheaders}
     Should Be Equal As Strings  ${resp.status_code}  200
@@ -85,14 +86,14 @@ Resource        config.txt
     ${return.status_code}=  Test Login  ${username}  admin12345
     Should Be Equal As Strings  ${return.status_code}  200
 
-用户管理-超级管理员-更新用户
-    [Tags]  用户管理
+case 10 用户管理-超级管理员-更新用户
+    [Tags]  用户管理  10
     ${data} =  Set Variable  {"id":${userid},"email":"${email}","userName":"${username} ","name":"真实名"}
     ${resp}=  Update User  data=${data}  headers=${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-用户管理-超级管理员-重置密码
-    [Tags]  用户管理
+case 11 用户管理-超级管理员-重置密码
+    [Tags]  用户管理  11
     ${data} =  Set Variable  {"password": "Fzh12345"}
     ${resp}=  Reset Password  ${userid}  ${data}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  200
@@ -101,8 +102,8 @@ Resource        config.txt
     ${return.status_code}=  Test Login  ${username}  Fzh12345
     Should Be Equal As Strings  ${return.status_code}  200
 
-用户管理-超级管理员-加入一个用户组
-    [Tags]  用户组管理
+case 12 用户管理-超级管理员-加入一个用户组
+    [Tags]  用户组管理  12
     ${groupname}=  Get Randomstring
     ${groupname}=  Evaluate  'apitest'+'${groupname}'
     ${data} =  Set Variable  {"name": "${groupname}" , "description": "cdscds"}
@@ -110,56 +111,56 @@ Resource        config.txt
     Should Be Equal As Strings  ${resp.status_code}  200
     ${testgroupid}=  Evaluate  '${resp.json()['data']['id']}'
     Set Global Variable  ${testgroupid}
-    ${data} =  Set Variable  {"accountId":${userid},"groupId":${testgroupid},"role":"member"}
+    ${data} =  Set Variable  {"accountId":${userid},"groupID":${testgroupid},"roleID":3}
     ${resp}=  Join User Group  ${data}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  200
     ${resp}=  Leave User Group  ${userid}  ${testgroupid}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-用户管理-超级管理员-获取所有用户
-    [Tags]  用户管理
+case 13 用户管理-超级管理员-获取所有用户
+    [Tags]  用户管理  13
     ${resp}=  Get All User  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-用户管理-超级管理员-获取指定用户信息
-    [Tags]  用组管理
+case 14 用户管理-超级管理员-获取指定用户信息
+    [Tags]  用组管理  14
     ${resp}=  Get User By Id  ${userid}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-用户组管理-超级管理员-禁用一个用户
-    [Tags]  用户管理
+case 15 用户组管理-超级管理员-禁用一个用户
+    [Tags]  用户管理  15
     ${resp}=  Disable User  ${userid}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  200
     ${return.status_code}=  Test Login  ${username}  Fzh12345
     Should Be Equal As Strings  ${return.status_code}  400
 
-用户组管理-超级管理员-启用一个用户
-    [Tags]  用户管理
+case 16 用户组管理-超级管理员-启用一个用户
+    [Tags]  用户管理  16
     ${resp}=  Enable User  ${userid}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  200
     ${return.status_code}=  Test Login  ${username}  Fzh12345
     Should Be Equal As Strings  ${return.status_code}  200
 
-用户管理-离开一个用户组
-    [Tags]  用户组管理
+case 17 用户管理-离开一个用户组
+    [Tags]  用户组管理  17
     ${resp}=  Leave User Group  ${userid}  ${groupid}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-用户组管理-超级管理员-删除用户
-    [Tags]  用户管理
+case 18 用户组管理-超级管理员-删除用户
+    [Tags]  用户管理  18
     ${resp}=  Delete User  ${userid}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  200
     ${return.status_code}=  Test Login  ${username}  admin1234
     Should Be Equal As Strings  ${return.status_code}  400
 
-镜像仓库管理-超级管理员-添加第三方镜像仓库
-    [Tags]  用户组管理
+case 19 镜像仓库管理-超级管理员-添加第三方镜像仓库
+    [Tags]  用户组管理  19
     ${name}=  Get Randomstring
     ${data} =  Set Variable  {"name":"${name}","userName":"zhfang","password":"Fzh12345","addr":"demoregistry.dataman-inc.com"}
     ${resp}=  Add Registry Auth  ${data}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-用户管理-登出
-    [Tags]  用户管理
+casd 20 用户管理-登出
+    [Tags]  用户管理  20
     ${resp}=  Logout  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  200

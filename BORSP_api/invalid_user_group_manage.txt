@@ -50,14 +50,14 @@ Resource        config.txt
 用户管理-创建用户-用户名已经存在
     [Tags]  创建用户
     ${email}=  Evaluate  '${username1}'+ '@dataman-inc.com'
-    ${data}=  Set Variable  {"email":"${email}","password":"admin1234","title":"职位, 可不填","userName":"${username1}","name":"真实名称, 可不填","phone":"手机号, 可不填","accountGroups":[{"groupId":${groupid1},"role":"owner"}]}
+    ${data}=  Set Variable  {"email":"${email}","password":"admin1234","title":"职位, 可不填","userName":"${username1}","name":"真实名称, 可不填","phone":"手机号, 可不填","accountGroups":[{"groupID":${groupid1},"roleID":2}]}
     ${resp}=  Create User  data=${data}  headers=${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  409
 
 用户管理-创建用户-没有权限
     [Tags]  创建用户
     ${testemail}=  Evaluate  '${username1}'+ '@dataman-inc.com'
-    ${data}=  Set Variable  {"email":"${testemail}","password":"admin1234","title":"职位, 可不填","userName":"${username1}","name":"真实名称, 可不填","phone":"手机号, 可不填","accountGroups":[{"groupId":${groupid1},"role":"owner"}]}
+    ${data}=  Set Variable  {"email":"${testemail}","password":"admin1234","title":"职位, 可不填","userName":"${username1}","name":"真实名称, 可不填","phone":"手机号, 可不填","accountGroups":[{"groupID":${groupid1},"roleID":3}]}
     ${resp}=  Create User  data=${data}  headers=${testheaders1}
     Should Be Equal As Strings  ${resp.status_code}  403
     ${resp}=  Create User  data=${data}  headers=${testheaders2}
@@ -156,13 +156,13 @@ Resource        config.txt
 
 用户管理-加入一个用户组-参数错误
     [Tags]  加入一个用户组
-    ${data} =  Set Variable  {"accountIds2":${userid1},"groupId":${groupid2},"role":"member"}
+    ${data} =  Set Variable  {"accountIds2":${userid1},"groupID":${groupid2},"roleID":3}
     ${resp}=  Join User Group  ${data}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  400
 
 用户管理-加入一个用户组-没有权限
     [Tags]  加入一个用户组
-    ${data} =  Set Variable  {"accountId":${userid1},"groupId":${groupid2},"role":"member"}
+    ${data} =  Set Variable  {"accountId":${userid1},"groupID":${groupid2},"roleID":3}
     ${resp}=  Join User Group  ${data}  ${testheaders1}
     Should Be Equal As Strings  ${resp.status_code}  403
     ${resp}=  Join User Group  ${data}  ${testheaders2}
@@ -170,13 +170,13 @@ Resource        config.txt
 
 用户管理-加入一个用户组-用户组不存在
     [Tags]  加入一个用户组
-    ${data} =  Set Variable  {"accountId":${userid1},"groupId":9999,"role":"member"}
+    ${data} =  Set Variable  {"accountId":${userid1},"groupID":9999,"roleID":3}
     ${resp}=  Join User Group  ${data}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  404
 
 用户管理-加入一个用户组-用户组冲突
     [Tags]  加入一个用户组
-    ${data} =  Set Variable  {"accountId":${userid1},"groupId":${groupid1},"role":"member"}
+    ${data} =  Set Variable  {"accountId":${userid1},"groupID":${groupid1},"roleID":3}
     ${resp}=  Join User Group  ${data}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  409
 

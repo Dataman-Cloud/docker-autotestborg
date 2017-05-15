@@ -12,17 +12,17 @@ Library         SSHLibrary
 Resource        config.txt
 
 *** Test Cases ***
-主机管理-获取所有主机列表-没有权限
-    [Tags]  获取所有主机列表
-    ${resp}=  Get All Nodes  ${testheaders1}
-    Should Be Equal As Strings  ${resp.status_code}  403
-    ${resp}=  Get All Nodes  ${testheaders2}
-    Should Be Equal As Strings  ${resp.status_code}  403
+# 主机管理-获取所有主机列表-没有权限
+    # [Tags]  获取所有主机列表
+    # ${resp}=  Get All Nodes  ${testheaders1}
+    # Should Be Equal As Strings  ${resp.status_code}  403
+    # ${resp}=  Get All Nodes  ${testheaders2}
+    # Should Be Equal As Strings  ${resp.status_code}  403
 
-主机管理-获取资源统计信息-没有权限
-    [Tags]  获取资源统计信息
-    ${resp}=  Get All Metrics  ${testheaders1}
-    Should Be Equal As Strings  ${resp.status_code}  403
+# 主机管理-获取资源统计信息-没有权限
+    # [Tags]  获取资源统计信息
+    # ${resp}=  Get All Metrics  ${testheaders1}
+    # Should Be Equal As Strings  ${resp.status_code}  403
 
 主机管理-获取指定主机的信息-没有权限
     [Tags]  获取指定主机的信息
@@ -65,7 +65,7 @@ Resource        config.txt
     Open Connection  ${mesosslave}
     Login  ${USERNAME}  ${PASSWORD}
     ${output}=  Execute Command  docker load < /root/alpine.tar
-    ${imageid}=  Evaluate  'sha256:4d8dee4f28726c036f35eacd25ec6606d43e39a7252b2f8b328ac3c16509fab1'
+    ${imageid}=  Evaluate  'sha256:e126e625ce3b4a2d4378340eaff80b30462522b3bd9a2bc85bc25d95b6d02c4b'
     ${resp}=  Delete Image By Id  ${imageid}  ${mesosslave}  ${testheaders1}
     Should Be Equal As Strings  ${resp.status_code}  403
     ${output}=  Execute Command  docker load < /root/alpine.tar
@@ -76,8 +76,8 @@ Resource        config.txt
     [Tags]  删除指定主机上的指定镜像
     Open Connection  ${mesosslave}
     Login  ${USERNAME}  ${PASSWORD}
-    ${output}=  Execute Command  docker load < /root/alpine.tar &&docker run --name=test -d alpine:3.1 sh &&docker ps -a
-    ${imageid}=  Evaluate  'sha256:4d8dee4f28726c036f35eacd25ec6606d43e39a7252b2f8b328ac3c16509fab1'
+    ${output}=  Execute Command  docker load < /root/alpine.tar &&docker run --name=test -d alpine:latest sh &&docker ps -a
+    ${imageid}=  Evaluate  'sha256:e126e625ce3b4a2d4378340eaff80b30462522b3bd9a2bc85bc25d95b6d02c4b'
     ${resp}=  Delete Image By Id  ${imageid}  ${mesosslave}  ${adminheaders}
     ${output}=  Execute Command  docker rm -f test
     Should Be Equal As Strings  ${resp.status_code}  409

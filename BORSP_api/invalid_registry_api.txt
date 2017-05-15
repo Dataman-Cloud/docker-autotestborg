@@ -12,21 +12,35 @@ Resource        config.txt
 Resource        registry_keyword.txt
 
 *** Test Cases ***
-镜像仓库-创建命名空间-json格式错误
-  [Tags]  镜像仓库
-  ${namespace}=  Get Randomstring
-  ${data}=  Set Variable  {"namespace","${namespace}"}
-  ${resp}=  Create Namespace  ${groupid1}  ${data}  ${adminheaders}
-  Should Be Equal As Strings  ${resp.status_code}  400
+case 0 镜像仓库-创建命名空间 管理员不能为管理员组创建命名空间 POST /v1/namespaces
+    [Tags]  镜像仓库  0
+    ${namespace}=  Get Randomstring
+    ${data}=  Set Variable  {"namespace":"${namespace}","groupId":1}
+    ${resp}=  Create Namespace    ${data}  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  403
 
-镜像仓库-创建命名空间-权限不够
-  [Tags]  镜像仓库
-  ${namespace}=  Get Randomstring
-  ${data}=  Set Variable  {"namespace":"${namespace}"}
-  ${resp}=  Create Namespace  ${groupid1}  ${data}  ${testheaders1}
-  Should Be Equal As Strings  ${resp.status_code}  403
+case 0.5 镜像仓库-创建命名空间 组owner不能给组创建命名空间 POST /v1/namespaces
+    [Tags]  镜像仓库  0.5
+    ${namespace}=  Get Randomstring
+    ${data}=  Set Variable  {"namespace":"${namespace}","groupId":${groupid1}}
+    ${resp}=  Create Namespace    ${data}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
 
-镜像仓库-创建命名空间-组不存在
+case 1 镜像仓库-创建命名空间-json格式错误
+    [Tags]  镜像仓库
+    ${namespace}=  Get Randomstring
+    ${data}=  Set Variable  {"namespace","${namespace}"}
+    ${resp}=  Create Namespace  ${groupid1}  ${data}  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  400
+
+case 2 镜像仓库-创建命名空间-权限不够
+    [Tags]  镜像仓库
+    ${namespace}=  Get Randomstring
+    ${data}=  Set Variable  {"namespace":"${namespace}"}
+    ${resp}=  Create Namespace  ${groupid1}  ${data}  ${testheaders1}
+    Should Be Equal As Strings  ${resp.status_code}  403
+
+case 3 镜像仓库-创建命名空间-组不存在
     [Tags]  镜像仓库
     ${namespace}=  Get Randomstring
     ${groupId}=  Set Variable  99999999
@@ -34,49 +48,49 @@ Resource        registry_keyword.txt
     ${resp}=  Create Namespace  ${groupid}  ${data}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  404
 
-镜像仓库-获取命名空间-参数错误
+case 4 镜像仓库-获取命名空间-参数错误
     [Tags]  镜像仓库
     ${groupid}=   Get Randomstring
     ${resp}=  Get Namespace  ${groupid}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  400
 
-镜像仓库-获取命名空间-权限不够
+case 5 镜像仓库-获取命名空间-权限不够
     [Tags]  镜像仓库
     ${resp}=  Get Namespace  ${groupid1}  ${testheaders1}
     Should Be Equal As Strings  ${resp.status_code}  403
 
-镜像仓库-获取命名空间-组不存在
+case 6 镜像仓库-获取命名空间-组不存在
     [Tags]  镜像仓库
     ${groupId}=  Set Variable  99999999
     ${resp}=  Get Namespace  ${groupid}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  404
 
-镜像仓库-获取命名空间镜像数-权限不够
+case 7 镜像仓库-获取命名空间镜像数-权限不够
     [Tags]  镜像仓库
     ${resp}=  Get ImageCount  ${groupid1}  ${testheaders1}
     Should Be Equal As Strings  ${resp.status_code}  403
 
-镜像仓库-删除命名空间-参数错误
+case 8 镜像仓库-删除命名空间-参数错误
     [Tags]  镜像仓库
     ${namespace}=  Get Randomstring
     ${groupid}=  Get Randomstring
     ${resp}=  Delete Namespace  ${groupid}  ${namespace}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  400
 
-镜像仓库-删除命名空间-权限不够
+case 9 镜像仓库-删除命名空间-权限不够
     [Tags]  镜像仓库
     ${namespace}=  Get Randomstring
     ${resp}=  Delete Namespace  $istoupid1}  ${namespace}  ${testheaders1}
     Should Be Equal As Strings  ${resp.status_code}  403
 
-镜像仓库-删除命名空间-组不存在
+case 10 镜像仓库-删除命名空间-组不存在
     [Tags]  镜像仓库
     ${namespace}=  Get Randomstring
     ${groupId}=  Set Variable  99999999
     ${resp}=  Delete Namespace  ${groupid}  ${namespace}  ${adminheaders}
     Should Be Equal As Strings  ${resp.status_code}  404
 
-镜像仓库-删除镜像-权限不够
+case 11 镜像仓库-删除镜像-权限不够
     [Tags]  镜像仓库
     ${namespace}=  Get Randomstring
     ${groupid}=  Get Randomstring

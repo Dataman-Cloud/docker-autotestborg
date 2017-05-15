@@ -3,19 +3,29 @@ Library         random
 Resource        ./all_api.txt
 
 *** Variables ***
-${SERVER}       http://192.168.1.254:81  # need to check
-${domain}       shurenyun
-${adminname}    admin                   # need to check, should be adminuser, but not "admin"
-${adminpasswd}  Admin1234                 # need to check
-${USERNAME}     root                     # user name of mesos slave ssh
-${PASSWORD}     123                      # password of mesos slave ssh
-${CLUSTER_DC}   dataman			# need to check , swan cluster dc , default  equal to consul dc
-#${mesosslave}     172.16.1.14            # mesos slave IP
+${SERVER}                     http://172.16.1.13:5013   # need to check
+${domain}                     shurenyun
+${adminname}                  admin                     # need to check, should be adminuser, but not "admin"
+${adminpasswd}                Admin1234                 # need to check
+${USERNAME}                   root                      # user name of mesos slave ssh
+${PASSWORD}                   123                       # password of mesos slave ssh
+${mesosslave}                 172.16.1.14               # mesos slave IP
+${app_test_user_name}         cc                        # user for app2 testing
+${app_test_user_passwd}       111111cC                  # password of user for app2 testing
+${app_test_group}             test
+${admin_dockerlogin_passwd}   M5QyDhEW                  # app_test_user's password of registory
+${mola_port}                  5018
+${app_image}                  blackicebird/2048         # deploy app name
+${cluster_name}               cluster1                      # app_test_user deploy app on this cluster
+${constraints}                equal vcluster ${cluster_name}
+${CLUSTER_DC}			dataman			# swan cluster dc
+
+
 
 *** Keywords ***
 Get Randomstring
-    ${Random} =  Generate Random String  6
-    ${randomstring} =  Convert To Lowercase  ${Random}
+    ${randomstring} =  Generate Random String  6      [LOWER]
+    # ${randomstring} =  Convert To Lowercase  ${Random}
     [Return]  ${randomstring}
 
 Test Login
@@ -23,6 +33,16 @@ Test Login
     ${data} =  Set Variable  {"userName":"${USERNAME}","password":"${PASSWORD}"}
     ${resp}=  Post Request  shurenyun  /v1/login  data=${data}
     [Return]  ${resp.status_code}
+
+Get App Test User Token
+    Create Session  shurenyun  ${SERVER}
+    ${data}=  Set Variable  {"userName":"${app_test_user_name}","password":"${app_test_user_passwd}"}
+    ${resp}=  Post Request  shurenyun  /v1/login  data=${data}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    ${token}=  Evaluate  '${resp.json()['data']}'
+    Set Global Variable  ${token}
+    ${app_test_headers}=  Create Dictionary  Authorization=${token}
+    Set Global Variable  ${app_test_headers}
 
 Get Token
     Create Session  shurenyun  ${SERVER}
@@ -44,16 +64,16 @@ Create Test Data
     Set Global Variable  ${adminheaders}
 
     #  获取nodeip
-    ${resp}=  Get All Nodes  ${adminheaders}
-    Should Be Equal As Strings  ${resp.status_code}  200
-    ${nodeip}=  Evaluate  '${resp.json()['data']['masters'][0]['ip']}'
-    Set Global Variable  ${nodeip}
+    # ${resp}=  Get All Nodes  ${adminheaders}
+    # Should Be Equal As Strings  ${resp.status_code}  200
+    # ${nodeip}=  Evaluate  '${resp.json()['data']['masters'][0]['ip']}'
+    # Set Global Variable  ${nodeip}
 
     #  获取instanceid
-    ${resp}=  Get Instances Info By Id  ${nodeip}  ${adminheaders}
-    Should Be Equal As Strings  ${resp.status_code}  200
-    ${instanceid}=  Evaluate  '${resp.json()['data'][0]['Id']}'
-    Set Global Variable  ${instanceid}
+    # ${resp}=  Get Instances Info By Id  ${nodeip}  ${adminheaders}
+    # Should Be Equal As Strings  ${resp.status_code}  200
+    # ${instanceid}=  Evaluate  '${resp.json()['data'][0]['Id']}'
+    # Set Global Variable  ${instanceid}
 
     #  创建用户组1
     ${groupname1}=  Get Randomstring
@@ -64,6 +84,7 @@ Create Test Data
     Should Be Equal As Strings  ${resp.status_code}  200
     ${groupid1}=  Evaluate  '${resp.json()['data']['id']}'
     Set Global Variable  ${groupid1}
+    Set Global Variable  ${groupname1}
 
     #  创建用户组2
     ${groupname2}=  Get Randomstring
@@ -80,7 +101,7 @@ Create Test Data
     ${username1}=  Evaluate  'apitest'+'${username1}'
     Set Global Variable  ${username1}
     ${email}=  Evaluate  '${username1}'+ '@dataman-inc.com'
-    ${data}=  Set Variable  {"email":"${email}","password":"admin1234","title":"职位, 可不填","userName":"${username1}","name":"真实名称, 可不填","phone":"手机号, 可不填","accountGroups":[{"groupId":${groupid1},"role":"owner"}]}
+    ${data}=  Set Variable  {"email":"${email}","password":"admin1234","title":"职位, 可不填","userName":"${username1}","name":"真实名称","phone":"手机号, 可不填","accountGroups":[{"groupID":${groupid1},"roleID":2}]}
     ${resp}=  Create User  data=${data}  headers=${adminheaders}
     ${data} =  Set Variable  {"username":"${username1}","password":"admin1234"}
     ${resp}=  Login Sry  ${data}
@@ -97,7 +118,7 @@ Create Test Data
     ${username2}=  Evaluate  'apitest'+'${username2}'
     Set Global Variable  ${username2}
     ${email}=  Evaluate  '${username2}'+ '@dataman-inc.com'
-    ${data}=  Set Variable  {"email":"${email}","password":"admin1234","title":"职位, 可不填","userName":"${username2}","name":"真实名称, 可不填","phone":"手机号, 可不填","accountGroups":[{"groupId":${groupid2},"role":"member"}]}
+    ${data}=  Set Variable  {"email":"${email}","password":"admin1234","title":"职位, 可不填","userName":"${username2}","name":"真实名称, 可不填","phone":"手机号, 可不填","accountGroups":[{"groupID":${groupid2},"roleID":3}]}
     ${resp}=  Create User  data=${data}  headers=${adminheaders}
     ${data} =  Set Variable  {"userName":"${username2}","password":"admin1234"}
     ${resp}=  Login Sry  ${data}

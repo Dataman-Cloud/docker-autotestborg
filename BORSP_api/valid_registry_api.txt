@@ -11,48 +11,122 @@ Library         json
 Resource        config.txt
 Resource        registry_keyword.txt
 
+*** Keywords ***
+Push Image to registry
+    Open Connection  ${mesosslave}
+    Login  ${USERNAME}  ${PASSWORD}
+    ${docker_registry}=  Remove String  ${SERVER}  http://
+    ${docker_registry}=  Fetch From Left  ${docker_registry}  :
+    ${cmd}=  Evaluate  'docker login '+'${docker_registry}'+':5002 -u '+'${adminname} -p '+'${admin_dockerlogin_passwd}'
+    ${output}=  Execute Command  ${cmd}
+    ${cmd}=  Evaluate  'docker tag blackicebird/2048:latest '+'${docker_registry}'+':5002/library/2048:latest'
+    ${output}=  Execute Command  ${cmd}
+    ${cmd}=  Evaluate  'docker push '+'${docker_registry}'+':5002/library/2048:latest'
+    ${output}=  Execute Command  ${cmd}
+
+Get external_registries ID
+    [Arguments]  ${headers}
+    ${path}=  Evaluate  '/v1/external_registries'
+    ${resp}=  Get Request  shurenyun  ${path}  data=${data}  headers=${headers}
+    log  ${resp.text}
+    ${registry_id}=  Evaluate  '${resp.json()['data'][0]['id']}'
+    [return]  ${registry_id}
+
+Edit User Password For Registry
+    [Arguments]  ${headers}  ${passwd}
+    ${id}=  Get external_registries ID  ${headers}
+    ${path}=  Evaluate  '/v1/external_registries/' + '${id}'
+    ${ServerIP}=  Remove String  ${SERVER}  http://
+    ${ServerIP}=  Remove String  ${ServerIP}  ":5013"
+    ${addr}=  Evaluate  '${ServerIP}' + ':5002'
+    ${data}=  Evaluate  '{"userName":"${username1}","password":"${passwd}","addr":"${addr}"}'
+    ${resp}=  Put Request  shurenyun  ${path}  data=${data}  headers=${headers}
+    log  ${resp.text}
+
+Group User Push Image to registry
+    [Arguments]  ${username}  ${passwd}
+    Open Connection  ${mesosslave}
+    Login  ${USERNAME}  ${PASSWORD}
+    ${docker_registry}=  Remove String  ${SERVER}  http://
+    ${docker_registry}=  Fetch From Left  ${docker_registry}  :
+    ${cmd}=  Evaluate  'docker login '+'${docker_registry}'+':5002 -u '+'${username} -p '+'${passwd}'
+    ${output}=  Execute Command  ${cmd}
+    ${cmd}=  Evaluate  'docker tag blackicebird/2048:latest '+'${docker_registry}'+':5002/library/2048:latest'
+    ${output}=  Execute Command  ${cmd}
+    ${cmd}=  Evaluate  'docker push '+'${docker_registry}'+':5002/' +'${namespace}'+ '/2048:latest'
+    ${output}=  Execute Command  ${cmd}
+
+Create Namespace
+    [Arguments]  ${data}  ${headers}
+    Create Session  shurenyun  ${SERVER}
+    ${path}=  Evaluate  '/v1/namespaces'
+    ${resp}=  Post Request  shurenyun  ${path}  data=${data}  headers=${headers}
+    log  ${resp.text}
+    [Return]  ${resp}
+
 *** Test Cases ***
-镜像仓库-推镜像
-    [Tags]  镜像仓库
+case 1 镜像仓库-推镜像
+    [Tags]  镜像仓库  1
     Push Image to registry
 
-镜像仓库-创建命名空间 POST /v1/registry/groups/:group_id/namespace
-  [Tags]  镜像仓库
-  ${namespace}=  Get Randomstring
-  ${data}=  Set Variable  {"namespace":"${namespace}"}
-  ${resp}=  Create Namespace  ${groupid1}  ${data}  ${adminheaders}
-  Should Be Equal As Strings  ${resp.status_code}  200
+case 2 镜像仓库-创建命名空间 POST /v1/namespaces
+    [Tags]  镜像仓库  2
+    ${namespace}=  Get Randomstring
+    Set Global Variable  ${namespace}
+    ${data}=  Set Variable  {"namespace":"${namespace}","groupId":${groupid1}}
+    ${resp}=  Create Namespace    ${data}  ${adminheaders}
+    Should Be Equal As Strings  ${resp.status_code}  200
 
-镜像仓库-获取命名空间 GET /v1/registry/groups/:group_id/namespace
-  [Tags]  镜像仓库
-  ${resp}=  Get Namespace  ${groupid1}  ${adminheaders}
-  Should Be Equal As Strings  ${resp.status_code}  200
-  ${namespace}=  Evaluate  '${resp.json()['data'][0]['Namespace']}'
-  Set Global Variable  ${namespace}
+case 3 镜像仓库-获取命名空间列表 GET /v1/namespaces
+    [Tags]  镜像仓库  2  3
+    ${resp}=  Get Request  shurenyun  /v1/namespaces  headers=${adminheaders}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
 
-镜像仓库-获取镜像数 GET /v1/registry/namespace/:namespace/imageCount
-  [Tags]  镜像仓库
-  ${resp}=  Get ImageCount  ${namespace}  ${adminheaders}
-  Should Be Equal As Strings  ${resp.status_code}  200
+case 4 镜像仓库-获取单个命名空间 GET /v1/namespaces/:namespace
+    [Tags]  镜像仓库  2  4
+    ${path}=  Evaluate  '/v1/namespaces/'+'${namespace}'
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${adminheaders}
+    log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
 
-镜像仓库-删除命名空间 DELETE /v1/registry/groups/:group_id/namespace/:namespace
-  [Tags]  镜像仓库
-  ${resp}=  Delete Namespace  ${groupid1}  ${namespace}  ${adminheaders}
-  Should Be Equal As Strings  ${resp.status_code}  200
+case 5 获取镜像仓库列表 GET /v1/repositories
+    [Tags]  镜像仓库  2  5
+    ${path}=  Evaluate  '/v1/repositories/?namespace=library&image=2048'
+    ${resp}=  Get Request  shurenyun   ${path}   headers=${adminheaders}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
 
-镜像仓库-镜像列表 GET /v1/registry/repositories/mine GET /v1/registry/repositories/mine
-  [Tags]  镜像仓库
-  ${resp}=  Get ImageList  ${adminheaders}
-  Should Be Equal As Strings  ${resp.status_code}  200
-  ${image}=  Evaluate  '${resp.json()['data'][0]['Image']}'
-  Set Global Variable  ${image}
+case 6 获取镜像版本列表 GET /v1/tags
+    [Tags]  镜像仓库  2  6
+    ${path}=  Evaluate  '/v1/tags/?namespace=library&image=2048'
+    ${resp}=  Get Request  shurenyun   ${path}   headers=${adminheaders}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
 
-镜像仓库-获取镜像版本列表 GET /v1/registry/groups/:group_id/namespace/:namespace/:image/tags
-  [Tags]  镜像仓库
-  ${resp}=  Get TagList  ${groupid1}  ${namespace}  ${image}  ${adminheaders}
-  Should Be Equal As Strings  ${resp.status_code}  200
+case 7 删除镜像版本 DELETE /v1/tags/:namespace/:image/:tag
+    [Tags]  镜像仓库    7
+    ${path}=  Evaluate  '/v1/tags/library/2048/latest'
+    ${resp}=  Delete Request  shurenyun   ${path}   headers=${adminheaders}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
 
-镜像仓库-删除镜像 DELETE /v1/registry/manifests/:namespace/:image
-  [Tags]  镜像仓库
-  ${resp}=  Delete Image  ${namespace}  ${image}  ${adminheaders}
-  Should Be Equal As Strings  ${resp.status_code}  200
+case 8 删除镜像仓库 DELETE /v1/repositories/:namespace/:image
+    [Tags]  镜像仓库  2  8
+    Push Image to registry
+    ${path}=  Evaluate  '/v1/repositories/library/2048'
+    ${resp}=  Delete Request  shurenyun   ${path}   headers=${adminheaders}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+case 9 删除命名空间 DELETE /v1/namespaces/:namespace
+    [Tags]  镜像仓库  2  9
+    ${path}=  Evaluate  '/v1/namespaces/' + '${namespace}'
+    ${resp}=  Delete Request  shurenyun   ${path}   headers=${adminheaders}
+    Log  ${resp.text}
+    Should Be Equal As Strings  ${resp.status_code}  200
+
+    # Edit User Password For Registry  ${testheaders1}  111111cC
+    # Group User Push Image to registry  ${username1}  111111cC
+
+

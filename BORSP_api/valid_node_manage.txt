@@ -12,7 +12,7 @@ Library         SSHLibrary
 Resource        config.txt
 
 *** Test Cases ***
-主机管理-获取集群主机列表
+case 1 主机管理-获取集群主机列表
     [Tags]  主机管理  ha
     Create Session  shurenyun  ${SERVER}
     ${resp}=  Get Request  shurenyun  /v1/nodes  headers=${headers}
@@ -21,14 +21,14 @@ Resource        config.txt
     ${nodeip}=  Evaluate  '${resp.json()['data']['masters'][0]['ip']}'
     Set Global Variable  ${nodeip}
 
-主机管理-获取集群监控信息
+case 2 主机管理-获取集群监控信息
     [Tags]  主机管理  ha
     Create Session  shurenyun  ${SERVER}
     ${resp}=  Get Request  shurenyun  /v1/metrics/snapshot  headers=${headers}
     Log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-主机管理-获取指定主机的信息
+case 3 主机管理-获取指定主机的信息
     [Tags]  主机管理  ha
     Create Session  shurenyun  ${SERVER}
     ${path}=  Evaluate  '/v1/nodes/'+'${nodeip}'+'/info'
@@ -36,7 +36,7 @@ Resource        config.txt
     Log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-主机管理-获取指定主机的容器列表
+case 4 主机管理-获取指定主机的容器列表
     [Tags]  主机管理  ha
     Create Session  shurenyun  ${SERVER}
     ${path}=  Evaluate  '/v1/nodes/'+'${nodeip}'+'/instances'
@@ -46,7 +46,7 @@ Resource        config.txt
     ${containerid}=  Evaluate  '${resp.json()['data'][0]['Id']}'
     Set Global Variable  ${containerid}
 
-主机管理-获取指定主机的镜像列表
+case 5 主机管理-获取指定主机的镜像列表
     [Tags]  主机管理  ha
     Create Session  shurenyun  ${SERVER}
     ${path}=  Evaluate  '/v1/nodes/'+'${nodeip}'+'/images'
@@ -54,17 +54,17 @@ Resource        config.txt
     Log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-主机管理-删除指定主机上的指定镜像
+case 6 主机管理-删除指定主机上的指定镜像
     [Tags]  主机管理
     Open Connection  ${mesosslave}
     Login  ${USERNAME}  ${PASSWORD}
     ${output}=  Execute Command  docker load < /root/alpine.tar
-    ${path}=  Evaluate  'v1/nodes/'+'${mesosslave}'+'/images/'+'sha256:4d8dee4f28726c036f35eacd25ec6606d43e39a7252b2f8b328ac3c16509fab1'
+    ${path}=  Evaluate  'v1/nodes/'+'${mesosslave}'+'/images/'+'sha256:e126e625ce3b4a2d4378340eaff80b30462522b3bd9a2bc85bc25d95b6d02c4b'
     ${resp}=  Delete Request  shurenyun  ${path}  headers=${headers}
     Log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-主机管理-获取主机上指定容器的信息
+case 7 主机管理-获取主机上指定容器的信息
     [Tags]  主机管理  ha
     Create Session  shurenyun  ${SERVER}
     ${path}=  Evaluate  '/v1/nodes/'+'${nodeip}'+'/instances/'+'${containerid}'+'/info'
@@ -72,7 +72,7 @@ Resource        config.txt
     Log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-主机管理-获取主机上服务的状态
+case 8 主机管理-获取主机上服务的状态
     [Tags]  主机管理  ha
     Create Session  shurenyun  ${SERVER}
     ${path}=  Evaluate  '/v1/nodes/'+'${nodeip}'+'/services'

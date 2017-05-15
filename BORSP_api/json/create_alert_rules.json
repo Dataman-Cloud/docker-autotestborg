@@ -1,0 +1,1 @@
+{"group": "${app_test_group}","app": "${appname_all}","indicator": "CPU使用百分比","severity": "warning","pending": "2m","aggregation": "max","comparison": ">","threshold": 60}

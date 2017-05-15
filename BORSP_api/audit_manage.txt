@@ -12,27 +12,27 @@ Library         SSHLibrary
 Resource        config.txt
 
 *** Test Cases ***
-审计管理-审计搜索
-    [Tags]  审计搜索
+case 1 审计管理-审计搜索
+    [Tags]  audit  1
     ${resp}=  Get Request  shurenyun  /v1/audit  headers=${adminheaders}
     log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-审计管理-审计搜索-没有权限
-    [Tags]  审计搜索
+case 2 审计管理-审计搜索-没有权限
+    [Tags]  audit  2
     ${resp}=  Get Request  shurenyun  /v1/audit  headers=${testheaders1}
     log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  403
 
-审计管理-对象类型搜索
-    [Tags]  对象类型搜索
-    ${resp}=  Get Request  shurenyun  /v1/audit/targettypes  headers=${adminheaders}
+case 3 审计管理-获取请求方法列表
+    [Tags]  audit  3
+    ${resp}=  Get Request  shurenyun  /v1/audit/methods  headers=${adminheaders}
     log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-审计管理-操作类型搜索
-    [Tags]  操作类型搜索
-    ${resp}=  Get Request  shurenyun  /v1/audit/operations  headers=${adminheaders}
+case 4 审计管理-获取操作类型列表
+    [Tags]  audit  4
+    ${resp}=  Get Request  shurenyun  /v1/audit/handlers  headers=${adminheaders}
     log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
 

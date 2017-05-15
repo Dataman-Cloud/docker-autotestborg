@@ -35,7 +35,7 @@ Create App
     Should Be Equal As Strings  ${resp.status_code}  201
     Sleep  10
     #获取应用状态
-    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-${CLUSTER_DC}'
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-zhfang-${CLUSTER_DC}'
     ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
     Log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
@@ -46,7 +46,7 @@ Create App
     Set Global Variable  ${time1}
 
 Delete App
-    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-admin-${CLUSTER_DC}'
+    ${path}=  Evaluate  '/v2/apps/'+'${appname}'+'-zhfang-${CLUSTER_DC}'
     ${resp}=  Delete Request  shurenyun  ${path}  headers=${headers}
     Log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
