@@ -1,4 +1,4 @@
-FROM pybot
+FROM demoregistry.dataman-inc.com/library/pybot
 
 COPY BORSP_api /BORSP_api
 
