@@ -1,5 +1,5 @@
 # docker-autotestborg
-自动化设置borgsphere镜像
+自动化测试borgsphere服务镜像
 
 ## 使用方法
 
