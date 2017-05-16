@@ -1,10 +1,10 @@
 name=library/centos7-autotestborg
 #tag=`date +%Y%m%d%H%M`
 opts="--no-cache"
-docker build -f Dockerfile_pybot -t pybot .
+docker build -f Dockerfile_pybot -t demoregistry.dataman-inc.com/library/pybot .
 
 cat > Dockerfile_runtime << EOF 
-FROM pybot
+FROM demoregistry.dataman-inc.com/library/pybot
 
 COPY BORSP_api /BORSP_api
 
