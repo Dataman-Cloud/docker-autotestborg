@@ -1,3 +1,3 @@
-BORSP_api/log.html
-BORSP_api/output.xml
-BORSP_api/report.html
+dockerfiles/BORSP_api/log.html
+dockerfiles/BORSP_api/output.xml
+dockerfiles/BORSP_api/report.html
