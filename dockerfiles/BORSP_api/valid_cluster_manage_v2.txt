@@ -1,5 +1,5 @@
 *** Settings ***
-Suite Setup     Get Token
+Suite Setup     Get Tenant Admin Token
 Suite Teardown  Delete All Sessions
 Library         Collections
 Library         String
@@ -20,11 +20,11 @@ case 1 集群管理-超级管理员-创建集群
     ${clustername}=  Get Randomstring
     ${clustername}=  Evaluate  'apitest'+'${clustername}'
     ${CrarteGroup} =  Set Variable  {"name": "${groupName}" , "description": "cdscds"}
-    ${resp}=  Post Request  ${domain}  /v1/groups  data=${CrarteGroup}  headers=${headers}
+    ${resp}=  Post Request  ${domain}  /v1/groups  data=${CrarteGroup}  headers=${tenant_headers}
     ${GroupId}=  Evaluate  '${resp.json()['data']['id']}'
     Set Global Variable  ${GroupId}
     ${data}=  Set Variable  {"groupId":${GroupId},"clusterLabel":"${clustername}","desc": "xsaxas"}
-    ${resp}=  Post Request  shurenyun  /v1/clusters  data=${data}  headers=${headers}
+    ${resp}=  Post Request  shurenyun  /v1/clusters  data=${data}  headers=${tenant_headers}
     log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  201
     ${clusterid}=  Evaluate  '${resp.json()['data']}'
@@ -32,27 +32,27 @@ case 1 集群管理-超级管理员-创建集群
 
 case 2 集群管理-超级管理员-获取集群列表
     [Tags]  集群管理  ha
-    ${resp}=  Get Request  shurenyun  /v1/clusters  headers=${headers}
+    ${resp}=  Get Request  shurenyun  /v1/clusters  headers=${tenant_headers}
     log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
 
 case 3 集群管理-超级管理员-获取单个集群
     [Tags]  集群管理  ha
     ${path}=  Evaluate  '/v1/clusters/'+'${clusterid}'
-    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${tenant_headers}
     log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
 
 case 4 集群管理-超级管理员-获得按vcluster分组的node列表
     [Tags]  集群管理  ha
-    ${resp}=  Get Request  shurenyun  /v1/nodes_group_by_vclusters  headers=${headers}
+    ${resp}=  Get Request  shurenyun  /v1/nodes_group_by_vclusters  headers=${tenant_headers}
     log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
 
 case 5 集群管理-超级管理员-获得用户组的vcluster列表
     [Tags]  集群管理  ha
     ${path}=  Evaluate  '/v1/group_clusters/'+'${GroupId}'
-    ${resp}=  Get Request  shurenyun  ${path}  headers=${headers}
+    ${resp}=  Get Request  shurenyun  ${path}  headers=${tenant_headers}
     log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
 
@@ -60,13 +60,13 @@ case 7 集群管理-更新指定集群描述
     [Tags]  集群管理  ha   2
     ${path}=  Evaluate  '/v1/clusters/'+'${clusterid}'
     ${data}=  Set Variable  {"desc":"ddddddd"}
-    ${resp}=  Patch Request  shurenyun  ${path}  data=${data}  headers=${headers}
+    ${resp}=  Patch Request  shurenyun  ${path}  data=${data}  headers=${tenant_headers}
     log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
 
 case 6 集群管理-超级管理员-删除集群
     [Tags]  集群管理  ha
     ${path}=  Evaluate  '/v2/clusters/'+'${clusterid}'
-    ${resp}=  Delete Request  shurenyun  ${path}  headers=${headers}
+    ${resp}=  Delete Request  shurenyun  ${path}  headers=${tenant_headers}
     log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200

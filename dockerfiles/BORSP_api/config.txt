@@ -10,12 +10,14 @@ ${adminpasswd}                Admin1234                 # need to check
 ${USERNAME}                   root                      # user name of mesos slave ssh
 ${PASSWORD}                   123                       # password of mesos slave ssh
 ${mesosslave}                 172.16.1.14               # mesos slave IP
-${app_test_user_name}         cc                        # user for app2 testing
-${app_test_user_passwd}       111111cC                  # password of user for app2 testing
+${tenant_user_name}         system                       # user for app2 testing
+${tenant_user_passwd}       Admin1234                  # password of user for app2 testing
+${app_test_user_name}         hatest                        # user for app2 testing
+${app_test_user_passwd}       Admin1234                  # password of user for app2 testing
 ${app_test_group}             test
 ${admin_dockerlogin_passwd}   M5QyDhEW                  # app_test_user's password of registory
 ${mola_port}                  5018
-${app_image}                  blackicebird/2048         # deploy app name
+${app_image}                  offlineregistry.dataman-inc.com:5000/libaray/blackicebird-2048         # deploy app name
 ${cluster_name}               cluster1                      # app_test_user deploy app on this cluster
 ${constraints}                equal vcluster ${cluster_name}
 ${CLUSTER_DC}			dataman			# swan cluster dc
@@ -33,6 +35,16 @@ Test Login
     ${data} =  Set Variable  {"userName":"${USERNAME}","password":"${PASSWORD}"}
     ${resp}=  Post Request  shurenyun  /v1/login  data=${data}
     [Return]  ${resp.status_code}
+
+Get Tenant Admin Token
+    Create Session  shurenyun  ${SERVER}
+    ${data}=  Set Variable  {"userName":"${tenant_user_name}","password":"${tenant_user_passwd}"}
+    ${resp}=  Post Request  shurenyun  /v1/login  data=${data}
+    Should Be Equal As Strings  ${resp.status_code}  200
+    ${token}=  Evaluate  '${resp.json()['data']}'
+    Set Global Variable  ${token}
+    ${tenant_headers}=  Create Dictionary  Authorization=${token}
+    Set Global Variable  ${tenant_headers}
 
 Get App Test User Token
     Create Session  shurenyun  ${SERVER}
