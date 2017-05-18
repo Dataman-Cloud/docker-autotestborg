@@ -5,13 +5,16 @@
 
 ```
 PYBOT_VARIABLES="
-	 --variable SERVER:$SRY_SERVER \
+         --variable SERVER:$SRY_SERVER \
          --variable USERNAME:$SSH_USER \
          --variable PASSWORD:$SSH_PASSWD \
          --variable adminname:$SRY_ADMIN_USER \
          --variable adminpasswd:$SRY_ADMIN_PASSWD \
+         --variable tenant_user_name:$SRY_TENANT_USER \
+         --variable tenant_user_passwd:$SRY_TENANT_PASSWD \
          --variable app_test_user_name:$SRY_HATEST_USER \
          --variable app_test_user_passwd:$SRY_HATEST_PASSWD \
+         --variable cluster_name:$SRY_HATEST_CLUSTER_NAME \
          --variable CLUSTER_DC:$SRY_CONSUL_DC"
 
 docker run -it $AUTOTESTBORG_IMAGE pybot $PYBOT_VARIABLES --include ha valid_cluster_manage_v2.txt
