@@ -17,7 +17,7 @@ ${app_test_user_passwd}       Admin1234                  # password of user for 
 ${app_test_group}             test
 ${admin_dockerlogin_passwd}   M5QyDhEW                  # app_test_user's password of registory
 ${mola_port}                  5018
-${app_image}                  offlineregistry.dataman-inc.com:5000/libaray/blackicebird-2048         # deploy app name
+${app_image}                  offlineregistry.dataman-inc.com:5000/library/blackicebird-2048:latest         # deploy app name
 ${cluster_name}               cluster1                      # app_test_user deploy app on this cluster
 ${constraints}                equal vcluster ${cluster_name}
 ${CLUSTER_DC}			dataman			# swan cluster dc
