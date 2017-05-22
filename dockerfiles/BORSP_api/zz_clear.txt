@@ -184,7 +184,7 @@ Clear Test Apps
     Should Be Equal As Strings                     ${resp.status_code}      200
     ${length}   Get Length  ${resp.json()['data']['apps']}
     : FOR    ${idx}    IN RANGE    ${length}
-    \  ${replace1}=   Replace String  ${resp.json()['data']['apps'][${idx}]['id']}  cluster1-apitest  ${EMPTY}
+    \  ${replace1}=   Replace String  ${resp.json()['data']['apps'][${idx}]['id']}  ${cluster_name}-apitest  ${EMPTY}
     \  Run Keyword Unless   "${resp.json()['data']['apps'][${idx}]['id']}"=="${replace1}"     Clear App  ${resp.json()['data']['apps'][${idx}]['id']}
 
 Clear App

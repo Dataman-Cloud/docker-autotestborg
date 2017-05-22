@@ -21,7 +21,7 @@ Resource        config.txt
 应用管理-新建应用
     [Tags]  应用管理  ha
     ${name}=  Get Randomstring
-    ${appname}=  Evaluate  'cluster1-apitest' + '${name}'
+    ${appname}=  Evaluate  '${cluster_name}-apitest' + '${name}'
     Set Global Variable  ${appname}
     ${appjson}=  Get Binary File  ${CURDIR}${/}json/valid_app.json
     ${data} =  Replace Variables  ${appjson}
