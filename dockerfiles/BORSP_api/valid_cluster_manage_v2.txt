@@ -12,7 +12,7 @@ Library         SSHLibrary
 Resource        config.txt
 
 *** Test Cases ***
-case 1 集群管理-超级管理员-创建集群
+case 1 集群管理-租户管理员-创建集群
     [Tags]  集群管理  ha
     Create Session  shurenyun  ${SERVER}
     ${groupName}=  Get Randomstring
@@ -30,26 +30,26 @@ case 1 集群管理-超级管理员-创建集群
     ${clusterid}=  Evaluate  '${resp.json()['data']}'
     Set Global Variable  ${clusterid}
 
-case 2 集群管理-超级管理员-获取集群列表
+case 2 集群管理-租户管理员-获取集群列表
     [Tags]  集群管理  ha
     ${resp}=  Get Request  shurenyun  /v1/clusters  headers=${tenant_headers}
     log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-case 3 集群管理-超级管理员-获取单个集群
+case 3 集群管理-租户管理员-获取单个集群
     [Tags]  集群管理  ha
     ${path}=  Evaluate  '/v1/clusters/'+'${clusterid}'
     ${resp}=  Get Request  shurenyun  ${path}  headers=${tenant_headers}
     log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-case 4 集群管理-超级管理员-获得按vcluster分组的node列表
+case 4 集群管理-租户管理员-获得按vcluster分组的node列表
     [Tags]  集群管理  ha
     ${resp}=  Get Request  shurenyun  /v1/nodes_group_by_vclusters  headers=${tenant_headers}
     log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-case 5 集群管理-超级管理员-获得用户组的vcluster列表
+case 5 集群管理-租户管理员-获得用户组的vcluster列表
     [Tags]  集群管理  ha
     ${path}=  Evaluate  '/v1/group_clusters/'+'${GroupId}'
     ${resp}=  Get Request  shurenyun  ${path}  headers=${tenant_headers}
@@ -64,7 +64,7 @@ case 7 集群管理-更新指定集群描述
     log  ${resp.text}
     Should Be Equal As Strings  ${resp.status_code}  200
 
-case 6 集群管理-超级管理员-删除集群
+case 6 集群管理-租户管理员-删除集群
     [Tags]  集群管理  ha
     ${path}=  Evaluate  '/v2/clusters/'+'${clusterid}'
     ${resp}=  Delete Request  shurenyun  ${path}  headers=${tenant_headers}
